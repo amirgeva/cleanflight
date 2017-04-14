@@ -83,7 +83,7 @@ static portSharing_e islPortSharing;
 #define ISL_BUFFER_SIZE 64
 
 /*
- *		Valid buffer structure is:
+ *		Valid buffer structure (out/in) is:
  *		Byte 0 = 0xFE  \
  *		Byte 1 = 0xED   \  4 bytes of the MAGIC header
  *		Byte 2 = 0xBE   /
@@ -108,13 +108,16 @@ static uint16_t rccmd[8];
 
 // Next index in islInBuffer to write incoming bytes.  
 // When this reaches ISL_BUFFER_SIZE, the buffer is full and should be processed.
-static int     islInBufferCursor=0;
+static int     islInBufferCursor = 0;
 
 // Next index to write telemetry data.  Resets to 4, right after the header
-static int     islOutBufferCursor=4;
+static int     islOutBufferCursor = 4;
 
 // Timestamp for last telemetry processing (micros)
 static uint32_t lastISLMessage = 0;
+
+// Timeout counter for incoming commands.  See function checkCommandTimeout for details
+static int islCommandTimeout = 0;
 
 // Reusing function defined in rx/jetiexbus.c
 uint16_t calcCRC16(uint8_t *buf, uint8_t len);
@@ -183,6 +186,10 @@ static void analyzeIncomingData(void)
 	uint16_t crc=calcCRC16(islInBuffer+4,ISL_BUFFER_SIZE-6);
 	if (( crc    &0xFF) != islInBuffer[ISL_BUFFER_SIZE-2]) return; // Invalid CRC
 	if (((crc>>8)&0xFF) != islInBuffer[ISL_BUFFER_SIZE-1]) return; // Invalid CRC
+	
+	// Reset timeout counter, since we just got a valid command
+	islCommandTimeout=0;
+	
 	isl_command_t* c=(isl_command_t*)islInBuffer;
 	for(int i=0;i<8;++i)
 	{
@@ -192,8 +199,22 @@ static void analyzeIncomingData(void)
 	}
 }
 
+// This is a safety function.  If no command has arrived in the past second,
+// remove all RC override, to avoid cases where a companion computer crashes
+// and you cannot resume manual control.
+static void checkCommandTimeout(void)
+{
+	if (++islCommandTimeout>=100) // Function called at 100Hz,  100 * 10ms = 1 second
+	{
+		islCommandTimeout=0;
+		for(int i=0;i<8;++i)
+			rccmd[i]=0;
+	}
+}
+
 static void processIncomingData(void)
 {
+	checkCommandTimeout();
 	uint32_t avail = serialRxBytesWaiting(islPort);
 	for(uint32_t i=0;i<avail;++i)
 	{
