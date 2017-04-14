@@ -12,3 +12,4 @@
 
 PYTHON := python
 export PYTHON
+GCC_REQUIRED_VERSION=5.4.1
