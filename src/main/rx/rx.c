@@ -493,6 +493,9 @@ static uint8_t getRxChannelCount(void)
     return maxChannelsAllowed;
 }
 
+// Function defined in ISL protocol
+extern uint16_t applyRxChannelOverride(int channel, uint16_t sample);
+
 static void readRxChannelsApplyRanges(void)
 {
     const int channelCount = getRxChannelCount();
@@ -507,6 +510,9 @@ static void readRxChannelsApplyRanges(void)
         if (channel < NON_AUX_CHANNEL_COUNT) {
             sample = applyRxChannelRangeConfiguraton(sample, rxChannelRangeConfigs(channel));
         }
+		
+		// ISL Protocol autonomous flight RC override
+		sample = applyRxChannelOverride(channel,sample);
 
         rcRaw[channel] = sample;
     }

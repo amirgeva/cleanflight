@@ -49,6 +49,7 @@
 #include "telemetry/ltm.h"
 #include "telemetry/jetiexbus.h"
 #include "telemetry/mavlink.h"
+#include "telemetry/isl.h"
 #include "telemetry/crsf.h"
 #include "telemetry/srxl.h"
 #include "telemetry/ibus.h"
@@ -96,6 +97,9 @@ void telemetryInit(void)
 #endif
 #ifdef TELEMETRY_MAVLINK
     initMAVLinkTelemetry();
+#endif
+#ifdef TELEMETRY_ISL
+    initISLTelemetry();
 #endif
 #ifdef TELEMETRY_CRSF
     initCrsfTelemetry();
@@ -162,6 +166,9 @@ void telemetryCheckState(void)
 #ifdef TELEMETRY_MAVLINK
     checkMAVLinkTelemetryState();
 #endif
+#ifdef TELEMETRY_ISL
+    checkISLTelemetryState();
+#endif
 #ifdef TELEMETRY_CRSF
     checkCrsfTelemetryState();
 #endif
@@ -194,6 +201,9 @@ void telemetryProcess(uint32_t currentTime)
 #endif
 #ifdef TELEMETRY_MAVLINK
     handleMAVLinkTelemetry();
+#endif
+#ifdef TELEMETRY_ISL
+    handleISLTelemetry();
 #endif
 #ifdef TELEMETRY_CRSF
     handleCrsfTelemetry(currentTime);
