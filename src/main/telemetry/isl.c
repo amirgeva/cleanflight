@@ -74,6 +74,8 @@
 #define TELEMETRY_ISL_MAXRATE 100
 #define TELEMETRY_ISL_DELAY ((1000 * 1000) / TELEMETRY_ISL_MAXRATE)
 
+extern uint16_t rssi; // defined in rx.c
+
 static serialPort_t *islPort = NULL;
 static serialPortConfig_t *portConfig;
 
@@ -155,12 +157,13 @@ typedef struct isl_command_s {
 } isl_command_t;
 
 typedef struct isl_telemetry_s {
-	uint8_t  header[4];			//  4 bytes
+	uint8_t  header[4];
 	uint16_t roll,pitch,yaw;    //  6 bytes
 	uint32_t acc[3];            // 12 bytes
 	float    gyro[3];           // 12 bytes
 	uint16_t rcin[8];           // 16 bytes
-	////////////////////// Total = 50 bytes  (out of possible 58)
+	uint16_t rssi;              //  2 bytes
+	////////////////////// Total = 48 bytes  (out of possible 58)
 } isl_telemetry_t;
 
 static void processISLTelemetry(void)
@@ -177,6 +180,7 @@ static void processISLTelemetry(void)
 		t->gyro[i]=gyro.gyroADCf[i];
 	for(int i=0;i<8;++i) 
 		t->rcin[i]=rcin[i];
+	t->rssi = rssi;
 	islOutBufferCursor=sizeof(isl_telemetry_t);
 	islSerialWriteBuffer();
 }
