@@ -20,8 +20,8 @@
 #include "config/parameter_group.h"
 #include "config/parameter_group_ids.h"
 
-#include "drivers/accgyro.h"
-#include "drivers/compass.h"
+#include "drivers/accgyro/accgyro.h"
+#include "drivers/compass/compass.h"
 #include "drivers/sensor.h"
 #include "drivers/system.h"
 
@@ -323,7 +323,7 @@ void configureSmartPortTelemetryPort(void)
 
     portOptions_t portOptions = 0;
 
-    if (telemetryConfig()->sportHalfDuplex) {
+    if (telemetryConfig()->halfDuplex) {
         portOptions |= SERIAL_BIDIR;
     }
 

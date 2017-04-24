@@ -672,6 +672,7 @@ COMMON_SRC = \
             drivers/bus_i2c_soft.c \
             drivers/bus_spi.c \
             drivers/bus_spi_soft.c \
+            drivers/buttons.c \
             drivers/display.c \
             drivers/exti.c \
             drivers/io.c \
@@ -724,6 +725,7 @@ FC_SRC = \
             fc/rc_adjustments.c \
             fc/rc_controls.c \
             fc/cli.c \
+            fc/settings.c \
             flight/altitude.c \
             flight/failsafe.c \
             flight/imu.c \
@@ -765,7 +767,6 @@ FC_SRC = \
             cms/cms_menu_ledstrip.c \
             cms/cms_menu_misc.c \
             cms/cms_menu_osd.c \
-            cms/cms_menu_vtx.c \
             common/colorconversion.c \
             common/gps_conversion.c \
             drivers/display_ug2864hsweg01.c \
@@ -796,9 +797,10 @@ FC_SRC = \
             telemetry/ibus_shared.c \
             sensors/esc_sensor.c \
             io/vtx_string.c \
+            io/vtx_rtc6705.c \
             io/vtx_smartaudio.c \
             io/vtx_tramp.c \
-            io/vtx.c
+            io/vtx_control.c
             
 COMMON_DEVICE_SRC = \
             $(CMSIS_SRC) \
@@ -886,7 +888,13 @@ SPEED_OPTIMISED_SRC := $(SPEED_OPTIMISED_SRC) \
 SIZE_OPTIMISED_SRC := $(SIZE_OPTIMISED_SRC) \
             drivers/serial_escserial.c \
             drivers/vtx_common.c \
-            io/cli.c \
+            fc/fc_init.c \
+            fc/cli.c \
+            fc/settings.c \
+            config/config_eeprom.c \
+            config/feature.c \
+            config/parameter_group.c \
+            config/config_streamer.c \
             io/serial_4way.c \
             io/serial_4way_avrootloader.c \
             io/serial_4way_stk500v2.c \
@@ -898,7 +906,7 @@ SIZE_OPTIMISED_SRC := $(SIZE_OPTIMISED_SRC) \
             cms/cms_menu_ledstrip.c \
             cms/cms_menu_misc.c \
             cms/cms_menu_osd.c \
-            cms/cms_menu_vtx.c \
+            io/vtx_rtc6705.c \
             io/vtx_smartaudio.c \
             io/vtx_tramp.c
 endif #F3
@@ -957,7 +965,7 @@ STM32F30x_COMMON_SRC = \
 
 STM32F4xx_COMMON_SRC = \
             target/system_stm32f4xx.c \
-            drivers/accgyro_mpu.c \
+            drivers/accgyro/accgyro_mpu.c \
             drivers/adc_stm32f4xx.c \
             drivers/bus_i2c_stm32f10x.c \
             drivers/dma_stm32f4xx.c \
@@ -971,7 +979,7 @@ STM32F4xx_COMMON_SRC = \
 
 STM32F7xx_COMMON_SRC = \
             target/system_stm32f7xx.c \
-            drivers/accgyro_mpu.c \
+            drivers/accgyro/accgyro_mpu.c \
             drivers/adc_stm32f7xx.c \
             drivers/bus_i2c_hal.c \
             drivers/dma_stm32f7xx.c \

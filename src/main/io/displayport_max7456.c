@@ -46,7 +46,7 @@ static int grab(displayPort_t *displayPort)
     UNUSED(displayPort);
 #ifdef OSD
     osdResetAlarms();
-    refreshTimeout = 0;
+    resumeRefreshAt = 0;
 #endif
 
     return 0;
@@ -100,11 +100,7 @@ static int writeChar(displayPort_t *displayPort, uint8_t x, uint8_t y, uint8_t c
 static bool isTransferInProgress(const displayPort_t *displayPort)
 {
     UNUSED(displayPort);
-#ifdef MAX7456_DMA_CHANNEL_TX
-    return max7456DmaInProgres();
-#else
-    return false;
-#endif
+    return max7456DmaInProgress();
 }
 
 static void resync(displayPort_t *displayPort)
