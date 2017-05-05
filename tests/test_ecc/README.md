@@ -13,7 +13,8 @@ shows a rate of about 30% packet loss due to CRC errors.
 A simulation using the code in this directory shows that this is about 0.7% probability 
 that any byte has to have one of its bits flipped.
 
-After implementation of the error correction, the results of successful packets receive percentage is as follows:
+After implementation of the error correction, the results of successful packets receive percentage is in the table below,
+and the 30% loss from before is reduced to 2.6%
 
 | Noise Threshold % | Success Rate % |
 | ----------------- | -------------- |
