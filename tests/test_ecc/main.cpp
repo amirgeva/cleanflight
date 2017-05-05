@@ -103,6 +103,7 @@ class Receiver
 {
   uint8_t buffer[64];
   int     cur;
+  bool    ecc_on;
 
   int successful;
   int failed_crc;
@@ -150,15 +151,24 @@ class Receiver
     calculate_crc(*tb);
     if (crc != tb->crc)
     {
-      if (correct_error(tb)) ++successful; else
+      if (ecc_on)
+      {
+        if (correct_error(tb))
+          ++successful;
+        else
+          ++failed_crc;
+      }
+      else
         ++failed_crc;
     }
     else
       ++successful;
   }
+
 public:
-  Receiver() 
+  Receiver(bool ecc) 
   : cur(0)
+  , ecc_on(ecc)
   , successful(0)
   , failed_crc(0)
   , thrown_bytes(0)
@@ -201,21 +211,24 @@ public:
 
 int main(int argc, char* argv[])
 {
-  std::cout << "Header size: " << sizeof(header) << std::endl;
-  std::cout << "Buffer size: " << sizeof(telemetry_buffer) << std::endl;
+  //std::cout << "Header size: " << sizeof(header) << std::endl;
+  //std::cout << "Buffer size: " << sizeof(telemetry_buffer) << std::endl;
   for (double noise_thres = 0.001; noise_thres < 0.05; noise_thres += 0.001)
   {
-    Receiver rcv;
+    Receiver rcv_no_ecc(false),rcv_ecc(true);
     for (int i = 0; i < 10000; ++i)
     {
       telemetry_buffer tb;
       generate(tb);
       const uint8_t* buffer = reinterpret_cast<const uint8_t*>(&tb);
       for (int j = 0; j < 64; ++j)
-        rcv.add_byte(noise(buffer[j],noise_thres));
+      {
+        rcv_no_ecc.add_byte(noise(buffer[j], noise_thres));
+        rcv_ecc.add_byte(noise(buffer[j], noise_thres));
+      }
     }
-    std::cout << noise_thres << "\t\t" << rcv.get_success_perc() << std::endl;
+    std::cout << noise_thres << "," << rcv_no_ecc.get_success_perc() 
+              << "," << rcv_ecc.get_success_perc() << std::endl;
   }
-  //rcv.print();
   return 0;
 }
