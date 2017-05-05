@@ -141,6 +141,7 @@ static void islSerialWriteBuffer()
 	// Clear unused part of the buffer
 	while(islOutBufferCursor<(ISL_BUFFER_SIZE-2))
 		islOutBuffer[islOutBufferCursor++]=0;
+	islOutBufferCursor=(ISL_BUFFER_SIZE-2);
 	
 	// Calculate CRC of payload (skip 4 header bytes, ignore last 2 crc bytes)
 	uint16_t crc=calcCRC16(islOutBuffer+4,ISL_BUFFER_SIZE-6);
@@ -157,14 +158,23 @@ typedef struct isl_command_s {
 } isl_command_t;
 
 typedef struct isl_telemetry_s {
-	uint8_t  header[4];
+	uint8_t  header[4];         //  4 bytes header
+	
+	uint32_t acc[3];            // 12 bytes  \ 4 byte data types first
+	float    gyro[3];           // 12 bytes  / to avoid alignment problems
 	uint16_t roll,pitch,yaw;    //  6 bytes
-	uint32_t acc[3];            // 12 bytes
-	float    gyro[3];           // 12 bytes
 	uint16_t rcin[8];           // 16 bytes
 	uint16_t rssi;              //  2 bytes
-	////////////////////// Total = 48 bytes  (out of possible 58)
+	uint16_t reserved;          //  2 bytes
+	////////////////////// Total = 50 bytes for payload
+	uint8_t  ecc[8];
+	uint16_t crc;               // 10 bytes total suffix
+	                            //
+								// Total 4 + 50 + 10 = 64 bytes
 } isl_telemetry_t;
+
+// Following line checks that the struct is 64 bytes at compile time.
+static const uint8_t static_check_struct_size[sizeof(isl_telemetry_t)==64?1:-1];
 
 static void processISLTelemetry(void)
 {
@@ -181,6 +191,12 @@ static void processISLTelemetry(void)
 	for(int i=0;i<8;++i) 
 		t->rcin[i]=rcin[i];
 	t->rssi = rssi;
+	t->reserved = 0;
+	const uint8_t* payload=islOutBuffer+4;
+	// Add simple XOR based error correction code
+	for(int i=0;i<8;++i) t->ecc[i]=0;
+	for(int i=0;i<50;++i)
+		t->ecc[i/8]^=payload[i];
 	islOutBufferCursor=sizeof(isl_telemetry_t);
 	islSerialWriteBuffer();
 }
