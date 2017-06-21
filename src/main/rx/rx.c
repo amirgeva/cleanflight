@@ -37,10 +37,11 @@
 #include "drivers/adc.h"
 #include "drivers/rx_pwm.h"
 #include "drivers/rx_spi.h"
-#include "drivers/system.h"
+#include "drivers/time.h"
 
 #include "fc/config.h"
 #include "fc/rc_controls.h"
+#include "fc/rc_modes.h"
 
 #include "flight/failsafe.h"
 
@@ -100,6 +101,11 @@ static uint8_t rcSampleIndex = 0;
 #ifndef RX_SPI_DEFAULT_PROTOCOL
 #define RX_SPI_DEFAULT_PROTOCOL 0
 #endif
+
+#ifndef SBUS_INVERSION_DEFAULT
+#define SBUS_INVERSION_DEFAULT 1
+#endif
+
 #ifndef SERIALRX_PROVIDER
 #define SERIALRX_PROVIDER 0
 #endif
@@ -115,7 +121,7 @@ void pgResetFn_rxConfig(rxConfig_t *rxConfig)
         .halfDuplex = 0,
         .serialrx_provider = SERIALRX_PROVIDER,
         .rx_spi_protocol = RX_SPI_DEFAULT_PROTOCOL,
-        .sbus_inversion = 1,
+        .sbus_inversion = SBUS_INVERSION_DEFAULT,
         .spektrum_sat_bind = 0,
         .spektrum_sat_bind_autoreset = 1,
         .midrc = RX_MID_USEC,
@@ -288,6 +294,7 @@ void rxInit(void)
     rcData[THROTTLE] = (feature(FEATURE_3D)) ? rxConfig()->midrc : rxConfig()->rx_min_usec;
 
     // Initialize ARM switch to OFF position when arming via switch is defined
+    // TODO - move to rc_mode.c
     for (int i = 0; i < MAX_MODE_ACTIVATION_CONDITION_COUNT; i++) {
         const modeActivationCondition_t *modeActivationCondition = modeActivationConditions(i);
         if (modeActivationCondition->modeId == BOXARM && IS_RANGE_USABLE(&modeActivationCondition->range)) {

@@ -26,12 +26,11 @@
 
 #define BEEPER                  PC9
 #define BEEPER_INVERTED
-#define INVERTER_PIN_USART3     PB15
+#define INVERTER_PIN_UART3      PB15
 
 // ICM20689 interrupt
 #define USE_EXTI
 #define MPU_INT_EXTI            PC5
-#define EXTI_CALLBACK_HANDLER_COUNT 1 // MPU data ready
 //#define DEBUG_MPU_DATA_READY_INTERRUPT
 #define USE_MPU_DATA_READY_SIGNAL
 #define ENSURE_MPU_DATA_READY_IS_LOW
@@ -117,7 +116,7 @@
 #define USE_I2C_DEVICE_1
 #define I2C_DEVICE              (I2CDEV_1)
 
-#define BOARD_HAS_VOLTAGE_DIVIDER
+#define DEFAULT_VOLTAGE_METER_SOURCE VOLTAGE_METER_ADC
 #define USE_ADC
 #define VBAT_ADC_PIN                PC3
 #define VBAT_ADC_CHANNEL            ADC_Channel_13

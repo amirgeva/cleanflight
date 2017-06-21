@@ -33,18 +33,18 @@
 #include "common/axis.h"
 #include "common/maths.h"
 
-#include "drivers/io.h"
-
-#include "drivers/system.h"
-#include "drivers/exti.h"
-#include "drivers/bus_spi.h"
-#include "drivers/gyro_sync.h"
-#include "drivers/light_led.h"
-
-#include "drivers/sensor.h"
 #include "drivers/accgyro/accgyro.h"
 #include "drivers/accgyro/accgyro_mpu.h"
 #include "drivers/accgyro/accgyro_spi_mpu9250.h"
+#include "drivers/bus_spi.h"
+#include "drivers/exti.h"
+#include "drivers/gyro_sync.h"
+#include "drivers/io.h"
+#include "drivers/light_led.h"
+#include "drivers/sensor.h"
+#include "drivers/time.h"
+#include "drivers/system.h"
+
 
 static void mpu9250AccAndGyroInit(gyroDev_t *gyro);
 
@@ -214,8 +214,8 @@ bool mpu9250SpiAccDetect(accDev_t *acc)
         return false;
     }
 
-    acc->init = mpu9250SpiAccInit;
-    acc->read = mpuAccRead;
+    acc->initFn = mpu9250SpiAccInit;
+    acc->readFn = mpuAccRead;
 
     return true;
 }
@@ -226,9 +226,9 @@ bool mpu9250SpiGyroDetect(gyroDev_t *gyro)
         return false;
     }
 
-    gyro->init = mpu9250SpiGyroInit;
-    gyro->read = mpuGyroRead;
-    gyro->intStatus = mpuCheckDataReady;
+    gyro->initFn = mpu9250SpiGyroInit;
+    gyro->readFn = mpuGyroRead;
+    gyro->intStatusFn = mpuCheckDataReady;
 
     // 16.4 dps/lsb scalefactor
     gyro->scale = 1.0f / 16.4f;

@@ -42,7 +42,6 @@
 #define SPI2_MISO_PIN            PB14
 #define SPI2_MOSI_PIN            PB15
 
-#define EXTI15_10_CALLBACK_HANDLER_COUNT 2 // MPU_INT, SDCardDetect
 
 #define GYRO
 #define USE_GYRO_SPI_MPU6000
@@ -116,7 +115,7 @@
 #define I2C2_SDA_CLK_SOURCE      RCC_AHBPeriph_GPIOA
 
 #define USE_ADC
-#define BOARD_HAS_VOLTAGE_DIVIDER
+#define DEFAULT_VOLTAGE_METER_SOURCE VOLTAGE_METER_ADC
 
 #define ADC_INSTANCE             ADC2
 

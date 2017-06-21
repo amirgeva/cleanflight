@@ -20,7 +20,6 @@
 
 #include "platform.h"
 
-#include "drivers/system.h"
 #include "drivers/io.h"
 #include "drivers/bus_i2c.h"
 
@@ -132,8 +131,8 @@ bool mma8452Detect(accDev_t *acc)
     if (!ack || (sig != MMA8452_DEVICE_SIGNATURE && sig != MMA8451_DEVICE_SIGNATURE))
         return false;
 
-    acc->init = mma8452Init;
-    acc->read = mma8452Read;
+    acc->initFn = mma8452Init;
+    acc->readFn = mma8452Read;
     device_id = sig;
     return true;
 }

@@ -88,7 +88,10 @@
 // #define USE_ESCSERIAL
 // #define ESCSERIAL_TIMER_TX_HARDWARE 0 // PWM 1
 
+#define USE_ESC_SENSOR
+
 #define USE_I2C
+#define USE_I2C_DEVICE_1
 #define I2C_DEVICE              (I2CDEV_1)
 #if (SPRACINGF4EVO_REV >= 2)
     #define I2C1_SCL                PB8
@@ -158,7 +161,7 @@
 // PC4 - NC - Free for ADC12_IN14 / VTX CS
 // PC5 - NC - Free for ADC12_IN15 / VTX Enable / OSD VSYNC
 
-#define BOARD_HAS_VOLTAGE_DIVIDER
+#define DEFAULT_VOLTAGE_METER_SOURCE VOLTAGE_METER_ADC
 
 #define OSD
 #define USE_OSD_OVER_MSP_DISPLAYPORT

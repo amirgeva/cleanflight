@@ -95,7 +95,7 @@
     #define ENABLE_BLACKBOX_LOGGING_ON_SPIFLASH_BY_DEFAULT
 	
     #define DEFAULT_FEATURES        (FEATURE_OSD)
-    #define BOARD_HAS_CURRENT_SENSOR
+    #define DEFAULT_CURRENT_METER_SOURCE CURRENT_METER_ADC
 #else
 
     #define USE_SDCARD
@@ -127,6 +127,7 @@
 #endif
 
 #define USE_I2C
+#define USE_I2C_DEVICE_1
 #define I2C_DEVICE              (I2CDEV_1) // SDA (PB9/AF4), SCL (PB8/AF4)
 #define I2C1_SCL            PB8
 #define I2C1_SDA            PB9
@@ -159,7 +160,7 @@
 #define UART3_TX_PIN            PB10 // PB10 (AF7)
 #define UART3_RX_PIN            PB11 // PB11 (AF7)
 
-#define BOARD_HAS_VOLTAGE_DIVIDER
+#define DEFAULT_VOLTAGE_METER_SOURCE VOLTAGE_METER_ADC
 #define USE_ADC
 #define ADC_INSTANCE            ADC1
 #define VBAT_ADC_PIN            PA0

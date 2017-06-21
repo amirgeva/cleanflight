@@ -36,10 +36,10 @@
 #include "config/parameter_group.h"
 #include "config/parameter_group_ids.h"
 
-#include "drivers/system.h"
-#include "drivers/sensor.h"
 #include "drivers/accgyro/accgyro.h"
+#include "drivers/sensor.h"
 #include "drivers/serial.h"
+#include "drivers/time.h"
 
 #include "fc/config.h"
 #include "fc/rc_controls.h"
@@ -416,7 +416,7 @@ static void sendVoltageAmp(void)
     } else {
         uint16_t voltage = (batteryVoltage * 110) / 21;
         uint16_t vfasVoltage;
-        if (telemetryConfig()->frsky_vfas_cell_voltage) {
+        if (telemetryConfig()->report_cell_voltage) {
             vfasVoltage = voltage / getBatteryCellCount();
         } else {
             vfasVoltage = voltage;
@@ -472,7 +472,7 @@ void configureFrSkyTelemetryPort(void)
         return;
     }
 
-    frskyPort = openSerialPort(portConfig->identifier, FUNCTION_TELEMETRY_FRSKY, NULL, FRSKY_BAUDRATE, FRSKY_INITIAL_PORT_MODE, telemetryConfig()->telemetry_inversion ? SERIAL_INVERTED : SERIAL_NOT_INVERTED);
+    frskyPort = openSerialPort(portConfig->identifier, FUNCTION_TELEMETRY_FRSKY, NULL, FRSKY_BAUDRATE, FRSKY_INITIAL_PORT_MODE, telemetryConfig()->telemetry_inverted ? SERIAL_NOT_INVERTED : SERIAL_INVERTED);
     if (!frskyPort) {
         return;
     }

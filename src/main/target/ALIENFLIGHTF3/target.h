@@ -19,7 +19,6 @@
 
 #define TARGET_BOARD_IDENTIFIER "AFF3" // AlienFlight F3.
 #define TARGET_CONFIG
-#define TARGET_BUS_INIT
 #define REMAP_TIM17_DMA
 
 #define CONFIG_FASTLOOP_PREFERRED_ACC ACC_DEFAULT
@@ -111,7 +110,6 @@
 
 #define ADC_INSTANCE            ADC2
 #define VBAT_ADC_PIN            PA4
-#define VBAT_SCALE_DEFAULT      20
 
 // LED strip configuration.
 #define LED_STRIP
@@ -122,7 +120,6 @@
 
 #define DEFAULT_FEATURES        FEATURE_MOTOR_STOP
 #define DEFAULT_RX_FEATURE      FEATURE_RX_SERIAL
-#define SERIALRX_PROVIDER       SERIALRX_SPEKTRUM2048
 #define SERIALRX_UART           SERIAL_PORT_USART2
 #define RX_CHANNELS_TAER
 

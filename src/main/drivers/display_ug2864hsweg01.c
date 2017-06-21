@@ -21,9 +21,10 @@
 #include "platform.h"
 
 #include "drivers/bus_i2c.h"
-#include "drivers/system.h"
 
 #include "display_ug2864hsweg01.h"
+
+#ifdef USE_I2C_OLED_DISPLAY
 
 #if !defined(OLED_I2C_INSTANCE)
 #if defined(I2C_DEVICE)
@@ -289,3 +290,4 @@ bool ug2864hsweg01InitI2C(void)
 
     return true;
 }
+#endif // USE_I2C_OLED_DISPLAY

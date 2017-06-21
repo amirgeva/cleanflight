@@ -27,6 +27,7 @@
 #include "drivers/rx_pwm.h"
 #include "drivers/sdcard.h"
 #include "drivers/serial.h"
+#include "drivers/bus_i2c.h"
 #include "drivers/sound_beeper.h"
 #include "drivers/vcd.h"
 
@@ -60,6 +61,7 @@ typedef enum {
     FEATURE_SOFTSPI = 1 << 26,
     FEATURE_ESC_SENSOR = 1 << 27,
     FEATURE_ANTI_GRAVITY = 1 << 28,
+    FEATURE_DYNAMIC_FILTER = 1 << 29,
 } features_e;
 
 #define MAX_NAME_LENGTH 16

@@ -29,14 +29,14 @@
 #include "common/maths.h"
 #include "common/utils.h"
 
-#include "drivers/nvic.h"
-
-#include "drivers/system.h"
-#include "drivers/io.h"
-#include "drivers/exti.h"
 #include "drivers/bus_i2c.h"
-
+#include "drivers/exti.h"
+#include "drivers/io.h"
+#include "drivers/nvic.h"
 #include "drivers/sensor.h"
+#include "drivers/system.h"
+#include "drivers/time.h"
+
 #include "accgyro.h"
 #include "accgyro_mpu3050.h"
 #include "accgyro_mpu6050.h"
@@ -118,8 +118,8 @@ static void mpuIntExtiHandler(extiCallbackRec_t *cb)
 #endif
     gyroDev_t *gyro = container_of(cb, gyroDev_t, exti);
     gyro->dataReady = true;
-    if (gyro->update) {
-        gyro->update(gyro);
+    if (gyro->updateFn) {
+        gyro->updateFn(gyro);
     }
 #ifdef DEBUG_MPU_DATA_READY_INTERRUPT
     const uint32_t now2Us = micros();
@@ -196,7 +196,7 @@ bool mpuAccRead(accDev_t *acc)
 void mpuGyroSetIsrUpdate(gyroDev_t *gyro, sensorGyroUpdateFuncPtr updateFn)
 {
     ATOMIC_BLOCK(NVIC_PRIO_MPU_INT_EXTI) {
-        gyro->update = updateFn;
+        gyro->updateFn = updateFn;
     }
 }
 

@@ -24,14 +24,14 @@
 #include "common/axis.h"
 #include "common/maths.h"
 
-#include "drivers/system.h"
-#include "drivers/exti.h"
-#include "drivers/io.h"
 #include "drivers/bus_spi.h"
+#include "drivers/exti.h"
 #include "drivers/gpio.h"
 #include "drivers/gyro_sync.h"
-
+#include "drivers/io.h"
 #include "drivers/sensor.h"
+#include "drivers/time.h"
+
 #include "accgyro.h"
 #include "accgyro_mpu.h"
 #include "accgyro_spi_icm20689.h"
@@ -115,8 +115,8 @@ bool icm20689SpiAccDetect(accDev_t *acc)
         return false;
     }
 
-    acc->init = icm20689AccInit;
-    acc->read = mpuAccRead;
+    acc->initFn = icm20689AccInit;
+    acc->readFn = mpuAccRead;
 
     return true;
 }
@@ -164,9 +164,9 @@ bool icm20689SpiGyroDetect(gyroDev_t *gyro)
         return false;
     }
 
-    gyro->init = icm20689GyroInit;
-    gyro->read = mpuGyroRead;
-    gyro->intStatus = mpuCheckDataReady;
+    gyro->initFn = icm20689GyroInit;
+    gyro->readFn = mpuGyroRead;
+    gyro->intStatusFn = mpuCheckDataReady;
 
     // 16.4 dps/lsb scalefactor
     gyro->scale = 1.0f / 16.4f;

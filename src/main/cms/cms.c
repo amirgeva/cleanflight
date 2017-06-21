@@ -44,6 +44,7 @@
 #include "common/typeconversion.h"
 
 #include "drivers/system.h"
+#include "drivers/time.h"
 
 // For rcData, stopAllMotors, stopPwmAllMotors
 #include "config/feature.h"
@@ -494,6 +495,8 @@ static void cmsMenuCountPage(displayPort_t *pDisplay)
     pageCount = (p - currentCtx.menu->entries - 1) / MAX_MENU_ITEMS(pDisplay) + 1;
 }
 
+STATIC_UNIT_TESTED long cmsMenuBack(displayPort_t *pDisplay); // Forward; will be resolved after merging
+
 long cmsMenuChange(displayPort_t *pDisplay, const void *ptr)
 {
     CMS_Menu *pMenu = (CMS_Menu *)ptr;
@@ -522,8 +525,9 @@ long cmsMenuChange(displayPort_t *pDisplay, const void *ptr)
         currentCtx.menu = pMenu;
         currentCtx.cursorRow = 0;
 
-        if (pMenu->onEnter)
-            pMenu->onEnter();
+        if (pMenu->onEnter && (pMenu->onEnter() == MENU_CHAIN_BACK)) {
+            return cmsMenuBack(pDisplay);
+        }
 
         cmsMenuCountPage(pDisplay);
         cmsPageSelect(pDisplay, 0);
@@ -986,7 +990,11 @@ void cmsUpdate(uint32_t currentTimeUs)
             lastCmsHeartBeatMs = currentTimeMs;
         }
     }
-    lastCalledMs = currentTimeMs;
+
+    // Some key (command), notably flash erase, takes too long to use the
+    // currentTimeMs to be used as lastCalledMs (freezes CMS for a minute or so
+    // if used).
+    lastCalledMs = millis();
 }
 
 void cmsHandler(timeUs_t currentTimeUs)

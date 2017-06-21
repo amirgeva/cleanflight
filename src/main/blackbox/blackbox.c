@@ -42,11 +42,12 @@
 
 #include "drivers/compass/compass.h"
 #include "drivers/sensor.h"
-#include "drivers/system.h"
+#include "drivers/time.h"
 
 #include "fc/config.h"
 #include "fc/controlrate_profile.h"
 #include "fc/rc_controls.h"
+#include "fc/rc_modes.h"
 #include "fc/runtime_config.h"
 
 #include "flight/failsafe.h"
@@ -281,7 +282,9 @@ typedef enum BlackboxState {
 typedef struct blackboxMainState_s {
     uint32_t time;
 
-    int32_t axisPID_P[XYZ_AXIS_COUNT], axisPID_I[XYZ_AXIS_COUNT], axisPID_D[XYZ_AXIS_COUNT];
+    int32_t axisPID_P[XYZ_AXIS_COUNT];
+    int32_t axisPID_I[XYZ_AXIS_COUNT];
+    int32_t axisPID_D[XYZ_AXIS_COUNT];
 
     int16_t rcCommand[4];
     int16_t gyroADC[XYZ_AXIS_COUNT];
@@ -323,7 +326,7 @@ typedef struct blackboxSlowState_s {
 extern uint16_t motorOutputHigh, motorOutputLow;
 
 //From rc_controls.c
-extern uint32_t rcModeActivationMask;
+extern boxBitmask_t rcModeActivationMask;
 
 static BlackboxState blackboxState = BLACKBOX_STATE_DISABLED;
 
@@ -406,7 +409,7 @@ static bool testBlackboxConditionUncached(FlightLogFieldCondition condition)
     case FLIGHT_LOG_FIELD_CONDITION_NONZERO_PID_D_0:
     case FLIGHT_LOG_FIELD_CONDITION_NONZERO_PID_D_1:
     case FLIGHT_LOG_FIELD_CONDITION_NONZERO_PID_D_2:
-        return currentPidProfile->D8[condition - FLIGHT_LOG_FIELD_CONDITION_NONZERO_PID_D_0] != 0;
+        return currentPidProfile->pid[condition - FLIGHT_LOG_FIELD_CONDITION_NONZERO_PID_D_0].D != 0;
 
     case FLIGHT_LOG_FIELD_CONDITION_MAG:
 #ifdef MAG
@@ -548,21 +551,21 @@ static void writeIntraframe(void)
     }
 
 #ifdef MAG
-        if (testBlackboxCondition(FLIGHT_LOG_FIELD_CONDITION_MAG)) {
-            blackboxWriteSigned16VBArray(blackboxCurrent->magADC, XYZ_AXIS_COUNT);
-        }
+    if (testBlackboxCondition(FLIGHT_LOG_FIELD_CONDITION_MAG)) {
+        blackboxWriteSigned16VBArray(blackboxCurrent->magADC, XYZ_AXIS_COUNT);
+    }
 #endif
 
 #ifdef BARO
-        if (testBlackboxCondition(FLIGHT_LOG_FIELD_CONDITION_BARO)) {
-            blackboxWriteSignedVB(blackboxCurrent->BaroAlt);
-        }
+    if (testBlackboxCondition(FLIGHT_LOG_FIELD_CONDITION_BARO)) {
+        blackboxWriteSignedVB(blackboxCurrent->BaroAlt);
+    }
 #endif
 
 #ifdef SONAR
-        if (testBlackboxCondition(FLIGHT_LOG_FIELD_CONDITION_SONAR)) {
-            blackboxWriteSignedVB(blackboxCurrent->sonarRaw);
-        }
+    if (testBlackboxCondition(FLIGHT_LOG_FIELD_CONDITION_SONAR)) {
+        blackboxWriteSignedVB(blackboxCurrent->sonarRaw);
+    }
 #endif
 
     if (testBlackboxCondition(FLIGHT_LOG_FIELD_CONDITION_RSSI)) {
@@ -573,6 +576,7 @@ static void writeIntraframe(void)
     if (testBlackboxCondition(FLIGHT_LOG_FIELD_CONDITION_ACC)) {
         blackboxWriteSigned16VBArray(blackboxCurrent->accSmooth, XYZ_AXIS_COUNT);
     }
+
     if (testBlackboxCondition(FLIGHT_LOG_FIELD_CONDITION_DEBUG)) {
         blackboxWriteSigned16VBArray(blackboxCurrent->debug, DEBUG16_VALUE_COUNT);
     }
@@ -750,7 +754,7 @@ static void writeSlowFrame(void)
  */
 static void loadSlowState(blackboxSlowState_t *slow)
 {
-    slow->flightModeFlags = rcModeActivationMask; //was flightModeFlags;
+    memcpy(&slow->flightModeFlags, &rcModeActivationMask, sizeof(slow->flightModeFlags)); //was flightModeFlags;
     slow->stateFlags = stateFlags;
     slow->failsafePhase = failsafePhase();
     slow->rxSignalReceived = rxIsReceivingSignal();
@@ -858,7 +862,7 @@ static void blackboxStart(void)
      */
     blackboxBuildConditionCache();
 
-    blackboxModeActivationConditionPresent = isModeActivationConditionPresent(modeActivationConditions(0), BOXBLACKBOX);
+    blackboxModeActivationConditionPresent = isModeActivationConditionPresent(BOXBLACKBOX);
 
     blackboxResetIterationTimers();
 
@@ -867,7 +871,7 @@ static void blackboxStart(void)
      * it finally plays the beep for this arming event.
      */
     blackboxLastArmingBeep = getArmingBeepTimeMicros();
-    blackboxLastFlightModeFlags = rcModeActivationMask; // record startup status
+    memcpy(&blackboxLastFlightModeFlags, &rcModeActivationMask, sizeof(blackboxLastFlightModeFlags)); // record startup status
 
     blackboxSetState(BLACKBOX_STATE_PREPARE_LOG_FILE);
 }
@@ -1235,34 +1239,34 @@ static bool blackboxWriteSysinfo(void)
         BLACKBOX_PRINT_HEADER_LINE("rates", "%d,%d,%d",                      currentControlRateProfile->rates[ROLL],
                                                                              currentControlRateProfile->rates[PITCH],
                                                                              currentControlRateProfile->rates[YAW]);
-        BLACKBOX_PRINT_HEADER_LINE("rollPID", "%d,%d,%d",                    currentPidProfile->P8[ROLL],
-                                                                             currentPidProfile->I8[ROLL],
-                                                                             currentPidProfile->D8[ROLL]);
-        BLACKBOX_PRINT_HEADER_LINE("pitchPID", "%d,%d,%d",                   currentPidProfile->P8[PITCH],
-                                                                             currentPidProfile->I8[PITCH],
-                                                                             currentPidProfile->D8[PITCH]);
-        BLACKBOX_PRINT_HEADER_LINE("yawPID", "%d,%d,%d",                     currentPidProfile->P8[YAW],
-                                                                             currentPidProfile->I8[YAW],
-                                                                             currentPidProfile->D8[YAW]);
-        BLACKBOX_PRINT_HEADER_LINE("altPID", "%d,%d,%d",                     currentPidProfile->P8[PIDALT],
-                                                                             currentPidProfile->I8[PIDALT],
-                                                                             currentPidProfile->D8[PIDALT]);
-        BLACKBOX_PRINT_HEADER_LINE("posPID", "%d,%d,%d",                     currentPidProfile->P8[PIDPOS],
-                                                                             currentPidProfile->I8[PIDPOS],
-                                                                             currentPidProfile->D8[PIDPOS]);
-        BLACKBOX_PRINT_HEADER_LINE("posrPID", "%d,%d,%d",                    currentPidProfile->P8[PIDPOSR],
-                                                                             currentPidProfile->I8[PIDPOSR],
-                                                                             currentPidProfile->D8[PIDPOSR]);
-        BLACKBOX_PRINT_HEADER_LINE("navrPID", "%d,%d,%d",                    currentPidProfile->P8[PIDNAVR],
-                                                                             currentPidProfile->I8[PIDNAVR],
-                                                                             currentPidProfile->D8[PIDNAVR]);
-        BLACKBOX_PRINT_HEADER_LINE("levelPID", "%d,%d,%d",                   currentPidProfile->P8[PIDLEVEL],
-                                                                             currentPidProfile->I8[PIDLEVEL],
-                                                                             currentPidProfile->D8[PIDLEVEL]);
-        BLACKBOX_PRINT_HEADER_LINE("magPID", "%d",                           currentPidProfile->P8[PIDMAG]);
-        BLACKBOX_PRINT_HEADER_LINE("velPID", "%d,%d,%d",                     currentPidProfile->P8[PIDVEL],
-                                                                             currentPidProfile->I8[PIDVEL],
-                                                                             currentPidProfile->D8[PIDVEL]);
+        BLACKBOX_PRINT_HEADER_LINE("rollPID", "%d,%d,%d",                    currentPidProfile->pid[PID_ROLL].P,
+                                                                             currentPidProfile->pid[PID_ROLL].I,
+                                                                             currentPidProfile->pid[PID_ROLL].D);
+        BLACKBOX_PRINT_HEADER_LINE("pitchPID", "%d,%d,%d",                   currentPidProfile->pid[PID_PITCH].P,
+                                                                             currentPidProfile->pid[PID_PITCH].I,
+                                                                             currentPidProfile->pid[PID_PITCH].D);
+        BLACKBOX_PRINT_HEADER_LINE("yawPID", "%d,%d,%d",                     currentPidProfile->pid[PID_YAW].P,
+                                                                             currentPidProfile->pid[PID_YAW].I,
+                                                                             currentPidProfile->pid[PID_YAW].D);
+        BLACKBOX_PRINT_HEADER_LINE("altPID", "%d,%d,%d",                     currentPidProfile->pid[PID_ALT].P,
+                                                                             currentPidProfile->pid[PID_ALT].I,
+                                                                             currentPidProfile->pid[PID_ALT].D);
+        BLACKBOX_PRINT_HEADER_LINE("posPID", "%d,%d,%d",                     currentPidProfile->pid[PID_POS].P,
+                                                                             currentPidProfile->pid[PID_POS].I,
+                                                                             currentPidProfile->pid[PID_POS].D);
+        BLACKBOX_PRINT_HEADER_LINE("posrPID", "%d,%d,%d",                    currentPidProfile->pid[PID_POSR].P,
+                                                                             currentPidProfile->pid[PID_POSR].I,
+                                                                             currentPidProfile->pid[PID_POSR].D);
+        BLACKBOX_PRINT_HEADER_LINE("navrPID", "%d,%d,%d",                    currentPidProfile->pid[PID_NAVR].P,
+                                                                             currentPidProfile->pid[PID_NAVR].I,
+                                                                             currentPidProfile->pid[PID_NAVR].D);
+        BLACKBOX_PRINT_HEADER_LINE("levelPID", "%d,%d,%d",                   currentPidProfile->pid[PID_LEVEL].P,
+                                                                             currentPidProfile->pid[PID_LEVEL].I,
+                                                                             currentPidProfile->pid[PID_LEVEL].D);
+        BLACKBOX_PRINT_HEADER_LINE("magPID", "%d",                           currentPidProfile->pid[PID_MAG].P);
+        BLACKBOX_PRINT_HEADER_LINE("velPID", "%d,%d,%d",                     currentPidProfile->pid[PID_VEL].P,
+                                                                             currentPidProfile->pid[PID_VEL].I,
+                                                                             currentPidProfile->pid[PID_VEL].D);
         BLACKBOX_PRINT_HEADER_LINE("dterm_filter_type", "%d",                currentPidProfile->dterm_filter_type);
         BLACKBOX_PRINT_HEADER_LINE("dterm_lpf_hz", "%d",                     currentPidProfile->dterm_lpf_hz);
         BLACKBOX_PRINT_HEADER_LINE("yaw_lpf_hz", "%d",                       currentPidProfile->yaw_lpf_hz);
@@ -1380,10 +1384,10 @@ static void blackboxCheckAndLogFlightMode(void)
     flightLogEvent_flightMode_t eventData; // Add new data for current flight mode flags
 
     // Use != so that we can still detect a change if the counter wraps
-    if (rcModeActivationMask != blackboxLastFlightModeFlags) {
+    if (memcmp(&rcModeActivationMask, &blackboxLastFlightModeFlags, sizeof(blackboxLastFlightModeFlags))) {
         eventData.lastFlags = blackboxLastFlightModeFlags;
-        blackboxLastFlightModeFlags = rcModeActivationMask;
-        eventData.flags = rcModeActivationMask;
+        memcpy(&blackboxLastFlightModeFlags, &rcModeActivationMask, sizeof(blackboxLastFlightModeFlags));
+        memcpy(&eventData.flags, &rcModeActivationMask, sizeof(eventData.flags));
 
         blackboxLogEvent(FLIGHT_LOG_EVENT_FLIGHTMODE, (flightLogEventData_t *) &eventData);
     }
@@ -1413,6 +1417,7 @@ static bool blackboxShouldLogIFrame(void)
  * We write it periodically so that if one Home Frame goes missing, the GPS coordinates can
  * still be interpreted correctly.
  */
+#ifdef GPS
 STATIC_UNIT_TESTED bool blackboxShouldLogGpsHomeFrame(void)
 {
     if (GPS_home[0] != gpsHistory.GPS_home[0] || GPS_home[1] != gpsHistory.GPS_home[1]
@@ -1421,6 +1426,7 @@ STATIC_UNIT_TESTED bool blackboxShouldLogGpsHomeFrame(void)
     }
     return false;
 }
+#endif
 
 // Called once every FC loop in order to keep track of how many FC loop iterations have passed
 static void blackboxAdvanceIterationTimers(void)

@@ -39,6 +39,7 @@
 #include "drivers/nvic.h"
 #include "drivers/sensor.h"
 #include "drivers/system.h"
+#include "drivers/time.h"
 #include "drivers/dma.h"
 #include "drivers/io.h"
 #include "drivers/light_led.h"
@@ -53,6 +54,7 @@
 #include "drivers/rx_pwm.h"
 #include "drivers/pwm_output.h"
 #include "drivers/adc.h"
+#include "drivers/bus.h"
 #include "drivers/bus_i2c.h"
 #include "drivers/bus_spi.h"
 #include "drivers/buttons.h"
@@ -132,10 +134,6 @@
 
 #ifdef TARGET_PREINIT
 void targetPreInit(void);
-#endif
-
-#ifdef TARGET_BUS_INIT
-void targetBusInit(void);
 #endif
 
 extern uint8_t motorControlEnable;
@@ -281,6 +279,10 @@ void init(void)
     busSwitchInit();
 #endif
 
+#if defined(USE_UART) && !defined(SITL)
+    uartPinConfigure(serialPinConfig());
+#endif
+
 #if defined(AVOID_UART1_FOR_PWM_PPM)
     serialInit(feature(FEATURE_SOFTSERIAL),
             feature(FEATURE_RX_PPM) || feature(FEATURE_RX_PARALLEL_PWM) ? SERIAL_PORT_USART1 : SERIAL_PORT_NONE);
@@ -338,8 +340,8 @@ void init(void)
     beeperInit(beeperDevConfig());
 #endif
 /* temp until PGs are implemented. */
-#ifdef USE_INVERTER
-    initInverters();
+#if defined(USE_INVERTER) && !defined(SITL)
+    initInverters(serialPinConfig());
 #endif
 
 #ifdef TARGET_BUS_INIT
@@ -362,6 +364,11 @@ void init(void)
 #endif /* USE_SPI */
 
 #ifdef USE_I2C
+    i2cHardwareConfigure();
+
+    // Note: Unlike UARTs which are configured when client is present,
+    // I2C buses are initialized unconditionally if they are configured.
+
 #ifdef USE_I2C_DEVICE_1
     i2cInit(I2CDEV_1);
 #endif
@@ -556,7 +563,7 @@ void init(void)
     if (mixerConfig()->mixerMode == MIXER_GIMBAL) {
         accSetCalibrationCycles(CALIBRATING_ACC_CYCLES);
     }
-    gyroSetCalibrationCycles();
+    gyroStartCalibration();
 #ifdef BARO
     baroSetCalibrationCycles(CALIBRATING_BARO_CYCLES);
 #endif

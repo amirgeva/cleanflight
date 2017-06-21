@@ -33,9 +33,10 @@
 #include "config/parameter_group.h"
 #include "config/parameter_group_ids.h"
 
-#include "drivers/light_led.h"
-#include "drivers/system.h"
 #include "drivers/gyro_sync.h"
+#include "drivers/transponder_ir.h"
+#include "drivers/light_led.h"
+#include "drivers/time.h"
 #include "drivers/transponder_ir.h"
 
 #include "sensors/acceleration.h"
@@ -107,7 +108,7 @@ int16_t magHold;
 int16_t headFreeModeHold;
 
 uint8_t motorControlEnable = false;
-
+static bool reverseMotors;
 static uint32_t disarmAt;     // Time of automatic disarm when "Don't spin the motors when armed" is enabled and auto_disarm_delay is nonzero
 
 bool isRXDataNew;
@@ -191,7 +192,7 @@ void mwArm(void)
     static bool firstArmingCalibrationWasCompleted;
 
     if (armingConfig()->gyro_cal_on_first_arm && !firstArmingCalibrationWasCompleted) {
-        gyroSetCalibrationCycles();
+        gyroStartCalibration();
         armingCalibrationWasInitialised = true;
         firstArmingCalibrationWasCompleted = true;
     }
@@ -206,6 +207,20 @@ void mwArm(void)
             return;
         }
         if (!ARMING_FLAG(PREVENT_ARMING)) {
+            #ifdef USE_DSHOT
+            if (!feature(FEATURE_3D) && !IS_RC_MODE_ACTIVE(BOX3DDISABLESWITCH)) {
+                reverseMotors = false;
+                for (unsigned index = 0; index < getMotorCount(); index++) {
+                    pwmWriteDshotCommand(index, DSHOT_CMD_ROTATE_NORMAL);
+                }
+            }
+            if (!feature(FEATURE_3D) && IS_RC_MODE_ACTIVE(BOX3DDISABLESWITCH)) {
+                reverseMotors = true;
+                for (unsigned index = 0; index < getMotorCount(); index++) {
+                    pwmWriteDshotCommand(index, DSHOT_CMD_ROTATE_REVERSE);
+                }
+            }
+            #endif
             ENABLE_ARMING_FLAG(ARMED);
             ENABLE_ARMING_FLAG(WAS_EVER_ARMED);
             headFreeModeHold = DECIDEGREES_TO_DEGREES(attitude.values.yaw);
@@ -281,7 +296,7 @@ void updateMagHold(void)
             dif -= 360;
         dif *= -GET_DIRECTION(rcControlsConfig()->yaw_control_reversed);
         if (STATE(SMALL_ANGLE))
-            rcCommand[YAW] -= dif * currentPidProfile->P8[PIDMAG] / 30;    // 18 deg
+            rcCommand[YAW] -= dif * currentPidProfile->pid[PID_MAG].P / 30;    // 18 deg
     } else
         magHold = DECIDEGREES_TO_DEGREES(attitude.values.yaw);
 }
@@ -499,7 +514,7 @@ static void subTaskMainSubprocesses(timeUs_t currentTimeUs)
     uint32_t startTime = 0;
     if (debugMode == DEBUG_PIDLOOP) {startTime = micros();}
 
-    // Read out gyro temperature if used for telemmetry
+    // Read out gyro temperature if used for telemetry
     if (feature(FEATURE_TELEMETRY)) {
         gyroReadTemperature();
     }
@@ -644,4 +659,9 @@ void taskMainPidLoop(timeUs_t currentTimeUs)
         subTaskMotorUpdate();
         runTaskMainSubprocesses = true;
     }
+}
+
+bool isMotorsReversed()
+{
+    return reverseMotors;
 }

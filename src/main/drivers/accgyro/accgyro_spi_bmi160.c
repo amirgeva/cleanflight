@@ -37,13 +37,13 @@
 
 #include "platform.h"
 
-#include "drivers/system.h"
-#include "drivers/io.h"
-#include "drivers/exti.h"
-#include "drivers/nvic.h"
 #include "drivers/bus_spi.h"
-
+#include "drivers/exti.h"
+#include "drivers/io.h"
+#include "drivers/nvic.h"
 #include "drivers/sensor.h"
+#include "drivers/time.h"
+
 #include "accgyro.h"
 #include "accgyro_spi_bmi160.h"
 
@@ -437,8 +437,8 @@ bool bmi160SpiAccDetect(accDev_t *acc)
         return false;
     }
 
-    acc->init = bmi160SpiAccInit;
-    acc->read = bmi160AccRead;
+    acc->initFn = bmi160SpiAccInit;
+    acc->readFn = bmi160AccRead;
 
     return true;
 }
@@ -450,9 +450,9 @@ bool bmi160SpiGyroDetect(gyroDev_t *gyro)
         return false;
     }
 
-    gyro->init = bmi160SpiGyroInit;
-    gyro->read = bmi160GyroRead;
-    gyro->intStatus = checkBMI160DataReady;
+    gyro->initFn = bmi160SpiGyroInit;
+    gyro->readFn = bmi160GyroRead;
+    gyro->intStatusFn = checkBMI160DataReady;
     gyro->scale = 1.0f / 16.4f;
 
     return true;

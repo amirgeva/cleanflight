@@ -16,7 +16,6 @@
 #include "common/color.h"
 #include "common/maths.h"
 
-#include "drivers/system.h"
 
 #include "drivers/sensor.h"
 #include "drivers/accgyro/accgyro.h"
@@ -25,6 +24,8 @@
 #include "drivers/serial.h"
 #include "drivers/bus_i2c.h"
 #include "drivers/gpio.h"
+#include "drivers/system.h"
+#include "drivers/time.h"
 #include "drivers/timer.h"
 #include "drivers/rx_pwm.h"
 
@@ -170,7 +171,7 @@ static const box_t boxes[CHECKBOX_ITEM_COUNT + 1] = {
     { BOXLLIGHTS, "LLIGHTS;", 16 },
     { BOXCALIB, "CALIB;", 17 },
     { BOXGOV, "GOVERNOR;", 18 },
-    { BOXOSD, "OSD SW;", 19 },
+    { BOXOSD, "OSD DISABLE SW;", 19 },
     { BOXTELEMETRY, "TELEMETRY;", 20 },
     { BOXGTUNE, "GTUNE;", 21 },
     { BOXSONAR, "SONAR;", 22 },
@@ -349,9 +350,9 @@ static bool bstSlaveProcessFeedbackCommand(uint8_t bstRequest)
             break;
         case BST_PID:
             for (i = 0; i < PID_ITEM_COUNT; i++) {
-                bstWrite8(currentPidProfile->P8[i]);
-                bstWrite8(currentPidProfile->I8[i]);
-                bstWrite8(currentPidProfile->D8[i]);
+                bstWrite8(currentPidProfile->pid[i].P);
+                bstWrite8(currentPidProfile->pid[i].I);
+                bstWrite8(currentPidProfile->pid[i].D);
             }
             pidInitConfig(currentPidProfile);
             break;
@@ -465,9 +466,9 @@ static bool bstSlaveProcessWriteCommand(uint8_t bstWriteCommand)
             break;
         case BST_SET_PID:
             for (i = 0; i < PID_ITEM_COUNT; i++) {
-                currentPidProfile->P8[i] = bstRead8();
-                currentPidProfile->I8[i] = bstRead8();
-                currentPidProfile->D8[i] = bstRead8();
+                currentPidProfile->pid[i].P = bstRead8();
+                currentPidProfile->pid[i].I = bstRead8();
+                currentPidProfile->pid[i].D = bstRead8();
             }
             break;
         case BST_SET_MODE_RANGE:
@@ -482,7 +483,7 @@ static bool bstSlaveProcessWriteCommand(uint8_t bstWriteCommand)
                     mac->range.startStep = bstRead8();
                     mac->range.endStep = bstRead8();
 
-                    useRcControlsConfig(modeActivationConditions(0), currentPidProfile);
+                    useRcControlsConfig(currentPidProfile);
                 } else {
                     ret = BST_FAILED;
                 }

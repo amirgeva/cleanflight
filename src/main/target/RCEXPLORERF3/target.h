@@ -30,7 +30,6 @@
 #define USE_EXTI
 #define USE_MPU_DATA_READY_SIGNAL
 #define MPU_INT_EXTI PA15
-#define EXTI15_10_CALLBACK_HANDLER_COUNT 1 // MPU data ready
 
 #define GYRO
 #define USE_GYRO_SPI_MPU6000
@@ -94,7 +93,7 @@
 #define SPI2_MOSI_PIN           PB15
 
 #define USE_ADC
-#define BOARD_HAS_VOLTAGE_DIVIDER
+#define DEFAULT_VOLTAGE_METER_SOURCE VOLTAGE_METER_ADC
 
 #define ADC_INSTANCE                ADC2
 #define VBAT_ADC_PIN                PA5

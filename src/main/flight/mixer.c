@@ -25,40 +25,33 @@
 #include "build/build_config.h"
 
 #include "common/axis.h"
-#include "common/maths.h"
 #include "common/filter.h"
+#include "common/maths.h"
 
 #include "config/feature.h"
 #include "config/parameter_group.h"
 #include "config/parameter_group_ids.h"
 
-#include "drivers/system.h"
 #include "drivers/pwm_output.h"
 #include "drivers/pwm_esc_detect.h"
+#include "drivers/time.h"
 
 #include "io/motors.h"
+
+#include "fc/config.h"
+#include "fc/rc_controls.h"
+#include "fc/rc_modes.h"
+#include "fc/runtime_config.h"
+#include "fc/fc_core.h"
+
+#include "flight/failsafe.h"
+#include "flight/imu.h"
+#include "flight/mixer.h"
+#include "flight/pid.h"
 
 #include "rx/rx.h"
 
 #include "sensors/battery.h"
-
-#include "flight/mixer.h"
-#include "flight/failsafe.h"
-#include "flight/pid.h"
-#include "flight/imu.h"
-
-#include "fc/config.h"
-#include "fc/rc_controls.h"
-#include "fc/runtime_config.h"
-
-PG_REGISTER_WITH_RESET_TEMPLATE(flight3DConfig_t, flight3DConfig, PG_MOTOR_3D_CONFIG, 0);
-
-PG_RESET_TEMPLATE(flight3DConfig_t, flight3DConfig,
-    .deadband3d_low = 1406,
-    .deadband3d_high = 1514,
-    .neutral3d = 1460,
-    .deadband3d_throttle = 50
-);
 
 PG_REGISTER_WITH_RESET_TEMPLATE(mixerConfig_t, mixerConfig, PG_MIXER_CONFIG, 0);
 
@@ -117,7 +110,6 @@ PG_REGISTER_ARRAY(motorMixer_t, MAX_SUPPORTED_MOTORS, customMotorMixer, PG_MOTOR
 #define EXTERNAL_CONVERSION_3D_MID_VALUE 1500
 
 #define TRICOPTER_ERROR_RATE_YAW_SATURATED 75 // rate at which tricopter yaw axis becomes saturated, determined experimentally by TriFlight
-
 
 static uint8_t motorCount;
 static float motorMixRange;
@@ -309,16 +301,16 @@ const mixer_t mixers[] = {
     { 0, true,  NULL },                // * MIXER_HELI_90_DEG
     { 4, false, mixerVtail4 },         // MIXER_VTAIL4
     { 6, false, mixerHex6H },          // MIXER_HEX6H
-    { 0, true,  NULL },                // * MIXER_PPM_TO_SERVO
+    { 0, true,  NULL },                // MIXER_RX_TO_SERVO
     { 2, true,  mixerDualcopter },     // MIXER_DUALCOPTER
     { 1, true,  NULL },                // MIXER_SINGLECOPTER
     { 4, false, mixerAtail4 },         // MIXER_ATAIL4
     { 0, false, NULL },                // MIXER_CUSTOM
     { 2, true,  NULL },                // MIXER_CUSTOM_AIRPLANE
     { 3, true,  NULL },                // MIXER_CUSTOM_TRI
-    { 4, false, mixerQuadX1234 },
+    { 4, false, mixerQuadX1234 }       // MIXER_QUADX_1234
 };
-#endif
+#endif // !USE_QUAD_MIXER_ONLY
 
 static uint16_t disarmMotorOutput, deadbandMotor3dHigh, deadbandMotor3dLow;
 uint16_t motorOutputHigh, motorOutputLow;
@@ -575,11 +567,14 @@ void mixTable(pidProfile_t *pidProfile)
     float motorMix[MAX_SUPPORTED_MOTORS];
     float motorMixMax = 0, motorMixMin = 0;
     const int yawDirection = GET_DIRECTION(mixerConfig()->yaw_motors_reversed);
+    int motorDirection = GET_DIRECTION(isMotorsReversed());
+        
+        
     for (int i = 0; i < motorCount; i++) {
         float mix =
-            scaledAxisPidRoll  * currentMixer[i].roll +
-            scaledAxisPidPitch * currentMixer[i].pitch +
-            scaledAxisPidYaw   * currentMixer[i].yaw * (-yawDirection);
+            scaledAxisPidRoll  * currentMixer[i].roll  * (motorDirection) +
+            scaledAxisPidPitch * currentMixer[i].pitch * (motorDirection) +
+            scaledAxisPidYaw   * currentMixer[i].yaw * (-yawDirection) * (motorDirection);
 
         if (vbatCompensationFactor > 1.0f) {
             mix *= vbatCompensationFactor;  // Add voltage compensation
@@ -604,7 +599,7 @@ void mixTable(pidProfile_t *pidProfile)
             throttle = 0.5f;
         }
     } else {
-        if (isAirmodeActive()) {  // Only automatically adjust throttle during airmode scenario
+        if (isAirmodeActive() || throttle > 0.5f) {  // Only automatically adjust throttle when airmode enabled. Airmode logic is always active on high throttle
             const float throttleLimitOffset = motorMixRange / 2.0f;
             throttle = constrainf(throttle, 0.0f + throttleLimitOffset, 1.0f - throttleLimitOffset);
         }
@@ -675,10 +670,12 @@ uint16_t convertMotorToExternal(uint16_t motorValue)
 #ifdef USE_DSHOT
     if (isMotorProtocolDshot()) {
         if (feature(FEATURE_3D) && motorValue >= DSHOT_MIN_THROTTLE && motorValue <= DSHOT_3D_DEADBAND_LOW) {
-            motorValue = DSHOT_MIN_THROTTLE + (DSHOT_3D_DEADBAND_LOW - motorValue);
+            // Subtract 1 to compensate for imbalance introduced in convertExternalToMotor()
+            motorValue = DSHOT_MIN_THROTTLE + (DSHOT_3D_DEADBAND_LOW - motorValue) - 1;
         }
 
-        externalValue = motorValue < DSHOT_MIN_THROTTLE ? EXTERNAL_CONVERSION_MIN_VALUE : constrain((motorValue / EXTERNAL_DSHOT_CONVERSION_FACTOR) + EXTERNAL_DSHOT_CONVERSION_OFFSET, EXTERNAL_CONVERSION_MIN_VALUE + 1, EXTERNAL_CONVERSION_MAX_VALUE);
+        // Subtract 1 to compensate for imbalance introduced in convertExternalToMotor()
+        externalValue = motorValue < DSHOT_MIN_THROTTLE ? EXTERNAL_CONVERSION_MIN_VALUE : constrain(((motorValue - 1)/ EXTERNAL_DSHOT_CONVERSION_FACTOR) + EXTERNAL_DSHOT_CONVERSION_OFFSET, EXTERNAL_CONVERSION_MIN_VALUE + 1, EXTERNAL_CONVERSION_MAX_VALUE);
 
         if (feature(FEATURE_3D) && motorValue == DSHOT_DISARM_COMMAND) {
             externalValue = EXTERNAL_CONVERSION_3D_MID_VALUE;

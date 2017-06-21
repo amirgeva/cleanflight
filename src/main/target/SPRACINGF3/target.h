@@ -37,12 +37,6 @@
 #define LED0                    PB3
 #endif
 
-#if defined(ZCOREF3)
-#define EXTI15_10_CALLBACK_HANDLER_COUNT 1
-#elif defined(FLIP32F3OSD)
-#define EXTI_CALLBACK_HANDLER_COUNT 2 // MPU data ready and MAG data ready
-#endif
-
 #define BEEPER                  PC15
 #define BEEPER_INVERTED
 
@@ -94,7 +88,7 @@
 #define ACC_MPU6050_ALIGN       CW270_DEG
 #endif
 
-#if defined(SPRACINGF3) || defined(FLIP32F3OSD)
+#if defined(FLIP32F3OSD)
 #define SONAR
 #define SONAR_TRIGGER_PIN       PB0
 #define SONAR_ECHO_PIN          PB1
@@ -168,8 +162,8 @@
 #define M25P16_CS_PIN           PB12
 #define M25P16_SPI_INSTANCE     SPI2
 
-#define BOARD_HAS_VOLTAGE_DIVIDER
-#define BOARD_HAS_CURRENT_SENSOR
+#define DEFAULT_VOLTAGE_METER_SOURCE VOLTAGE_METER_ADC
+#define DEFAULT_CURRENT_METER_SOURCE CURRENT_METER_ADC
 #define USE_ADC
 #define ADC_INSTANCE            ADC2
 #define VBAT_ADC_PIN            PA4

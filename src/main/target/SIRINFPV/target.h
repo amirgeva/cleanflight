@@ -22,7 +22,6 @@
 #define LED0                    PB2
 #define BEEPER                  PA1
 
-#define EXTI15_10_CALLBACK_HANDLER_COUNT 1 // MPU_INT
 
 #define USE_EXTI
 #define USE_MPU_DATA_READY_SIGNAL
@@ -135,7 +134,7 @@
 // Performance logging for SD card operations:
 // #define AFATFS_USE_INTROSPECTIVE_LOGGING
 
-#define BOARD_HAS_VOLTAGE_DIVIDER
+#define DEFAULT_VOLTAGE_METER_SOURCE VOLTAGE_METER_ADC
 #define USE_ADC
 #define ADC_INSTANCE            ADC1
 #define VBAT_ADC_PIN            PA0

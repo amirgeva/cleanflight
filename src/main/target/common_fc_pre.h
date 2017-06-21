@@ -41,19 +41,24 @@
 #ifdef STM32F3
 #define MINIMAL_CLI
 #define USE_DSHOT
+#define USE_GYRO_DATA_ANALYSE
 #endif
 
 #ifdef STM32F4
 #define USE_DSHOT
+#define USE_ESC_SENSOR
 #define I2C3_OVERCLOCK true
 #define TELEMETRY_IBUS
+#define USE_GYRO_DATA_ANALYSE
 #endif
 
 #ifdef STM32F7
 #define USE_DSHOT
+#define USE_ESC_SENSOR
 #define I2C3_OVERCLOCK true
 #define I2C4_OVERCLOCK true
 #define TELEMETRY_IBUS
+#define USE_GYRO_DATA_ANALYSE
 #endif
 
 #if defined(STM32F4) || defined(STM32F7)
@@ -101,7 +106,6 @@
 #endif
 
 #if (FLASH_SIZE > 128)
-#define GPS
 #define CMS
 #define TELEMETRY_LTM
 #define TELEMETRY_CRSF
@@ -122,5 +126,8 @@
 #endif
 
 #if (FLASH_SIZE > 256)
+// Temporarily moved this here because of overflowing flash size on F3
+#define GPS
+
 #define USE_UNCOMMON_MIXERS
 #endif
