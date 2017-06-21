@@ -76,9 +76,9 @@
 #define MAG_AK8975_ALIGN        CW90_DEG_FLIP
 #endif
 
-//#define SONAR
-//#define SONAR_ECHO_PIN          PB1
-//#define SONAR_TRIGGER_PIN       PB0
+#define SONAR
+#define SONAR_ECHO_PIN          PB1
+#define SONAR_TRIGGER_PIN       PB0
 
 #define BRUSHED_ESC_AUTODETECT
 

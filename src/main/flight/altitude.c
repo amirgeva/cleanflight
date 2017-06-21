@@ -64,6 +64,7 @@ int32_t altHoldThrottleAdjustment = 0;
 int32_t AltHold;
 int32_t estimatedVario = 0;                      // variometer in cm/s
 static int32_t estimatedAltitude = 0;                // in cm
+static int32_t unfilteredAltitude = 0;
 
 
 static pidProfile_t *pidProfile;
@@ -237,6 +238,7 @@ void calculateEstimatedAltitude(timeUs_t currentTimeUs)
 #ifdef SONAR
     if (sensors(SENSOR_SONAR)) {
         int32_t sonarAlt = sonarCalculateAltitude(sonarRead(), getCosTiltAngle());
+        unfilteredAltitude = sonarAlt;
         if (sonarAlt > 0 && sonarAlt >= sonarCfAltCm && sonarAlt <= sonarMaxAltWithTiltCm) {
             // SONAR in range, so use complementary filter
             float sonarTransition = (float)(sonarMaxAltWithTiltCm - sonarAlt) / (sonarMaxAltWithTiltCm - sonarCfAltCm);
@@ -304,6 +306,11 @@ void calculateEstimatedAltitude(timeUs_t currentTimeUs)
 int32_t getEstimatedAltitude(void)
 {
     return estimatedAltitude;
+}
+
+int32_t getUnfilteredAltitude(void)
+{
+    return unfilteredAltitude;
 }
 
 int32_t getEstimatedVario(void)

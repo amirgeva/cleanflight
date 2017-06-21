@@ -74,7 +74,7 @@
 #define TELEMETRY_ISL_MAXRATE 100
 #define TELEMETRY_ISL_DELAY ((1000 * 1000) / TELEMETRY_ISL_MAXRATE)
 
-extern uint16_t rssi; // defined in rx.c
+extern uint16_t raw_rssi; // defined in rx.c
 
 static serialPort_t *islPort = NULL;
 static serialPortConfig_t *portConfig;
@@ -165,7 +165,7 @@ typedef struct isl_telemetry_s {
 	uint16_t roll,pitch,yaw;    //  6 bytes
 	uint16_t rcin[8];           // 16 bytes
 	uint16_t rssi;              //  2 bytes
-	uint16_t reserved;          //  2 bytes
+	uint16_t altitude;          //  2 bytes
 	////////////////////// Total = 50 bytes for payload
 	uint8_t  ecc[8];
 	uint16_t crc;               // 10 bytes total suffix
@@ -178,26 +178,26 @@ static const uint8_t static_check_struct_size[sizeof(isl_telemetry_t)==64?1:-1];
 
 static void processISLTelemetry(void)
 {
-	isl_telemetry_t* t=(isl_telemetry_t*)islOutBuffer;
-	for(int i=0;i<4;++i)
-		t->header[i]=MAGIC[i];
-	t->roll=attitude.values.roll;
-	t->pitch=attitude.values.pitch;
-	t->yaw=attitude.values.yaw;
-	for(int i=0;i<3;++i) 
-		t->acc[i]=acc.accSmooth[i];
-	for(int i=0;i<3;++i) 
-		t->gyro[i]=gyro.gyroADCf[i];
-	for(int i=0;i<8;++i) 
-		t->rcin[i]=rcin[i];
-	t->rssi = rssi;
-	t->reserved = 0;
-	const uint8_t* payload=islOutBuffer+4;
-	// Add simple XOR based error correction code
-	for(int i=0;i<8;++i) t->ecc[i]=0;
-	for(int i=0;i<50;++i)
-		t->ecc[i/8]^=payload[i];
-	islOutBufferCursor=sizeof(isl_telemetry_t);
+    isl_telemetry_t* t=(isl_telemetry_t*)islOutBuffer;
+    for(int i=0;i<4;++i)
+        t->header[i]=MAGIC[i];
+    t->roll=attitude.values.roll;
+    t->pitch=attitude.values.pitch;
+    t->yaw=attitude.values.yaw;
+    for(int i=0;i<3;++i) 
+        t->acc[i]=acc.accSmooth[i];
+    for(int i=0;i<3;++i) 
+        t->gyro[i]=gyro.gyroADCf[i];
+    for(int i=0;i<8;++i) 
+        t->rcin[i]=rcin[i];
+    t->rssi = raw_rssi;
+    t->altitude = (uint16_t)(getUnfilteredAltitude() & 0xFFFF);
+    const uint8_t* payload=islOutBuffer+4;
+    // Add simple XOR based error correction code
+    for(int i=0;i<8;++i) t->ecc[i]=0;
+    for(int i=0;i<50;++i)
+        t->ecc[i/8]^=payload[i];
+    islOutBufferCursor=sizeof(isl_telemetry_t);
 	islSerialWriteBuffer();
 }
 

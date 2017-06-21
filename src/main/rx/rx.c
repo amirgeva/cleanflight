@@ -66,6 +66,7 @@
 const char rcChannelLetters[] = "AERT12345678abcdefgh";
 
 uint16_t rssi = 0;                  // range: [0;1023]
+uint16_t raw_rssi = 0;
 
 static bool rxDataReceived = false;
 static bool rxSignalReceived = false;
@@ -650,6 +651,7 @@ static void updateRSSIADC(timeUs_t currentTimeUs)
     rssiUpdateAt = currentTimeUs + DELAY_50_HZ;
 
     const uint16_t adcRssiSample = adcGetChannel(ADC_RSSI);
+    raw_rssi = adcRssiSample;
     const uint8_t rssiPercentage = adcRssiSample / rxConfig()->rssi_scale;
 
     adcRssiSampleIndex = (adcRssiSampleIndex + 1) % RSSI_ADC_SAMPLE_COUNT;
