@@ -29,7 +29,6 @@ PG_DECLARE(airplaneConfig_t, airplaneConfig);
 
 void calculateEstimatedAltitude(timeUs_t currentTimeUs);
 int32_t getEstimatedAltitude(void);
-int32_t getUnfilteredAltitude(void);
 int32_t getEstimatedVario(void);
 
 void applyAltHold(void);

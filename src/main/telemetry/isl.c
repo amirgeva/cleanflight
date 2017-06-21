@@ -38,6 +38,7 @@
 #include "config/parameter_group_ids.h"
 
 #include "drivers/system.h"
+#include "drivers/time.h"
 #include "drivers/sensor.h"
 #include "drivers/accgyro/accgyro.h"
 
@@ -191,7 +192,7 @@ static void processISLTelemetry(void)
     for(int i=0;i<8;++i) 
         t->rcin[i]=rcin[i];
     t->rssi = raw_rssi;
-    t->altitude = (uint16_t)(getUnfilteredAltitude() & 0xFFFF);
+    t->altitude = 0;
     const uint8_t* payload=islOutBuffer+4;
     // Add simple XOR based error correction code
     for(int i=0;i<8;++i) t->ecc[i]=0;

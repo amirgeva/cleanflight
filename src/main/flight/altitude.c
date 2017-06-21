@@ -301,11 +301,6 @@ int32_t getEstimatedAltitude(void)
     return estimatedAltitude;
 }
 
-int32_t getUnfilteredAltitude(void)
-{
-    return unfilteredAltitude;
-}
-
 int32_t getEstimatedVario(void)
 {
     return estimatedVario;
