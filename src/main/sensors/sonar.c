@@ -51,6 +51,8 @@ float sonarMaxTiltCos;
 
 static int32_t calculatedAltitude;
 
+void overrideSonarReading(int32_t* distance);
+
 PG_REGISTER_WITH_RESET_TEMPLATE(sonarConfig_t, sonarConfig, PG_SONAR_CONFIG, 0);
 
 PG_RESET_TEMPLATE(sonarConfig_t, sonarConfig,
@@ -113,7 +115,7 @@ int32_t sonarRead(void)
     int32_t distance = hcsr04_get_distance();
     if (distance > HCSR04_MAX_RANGE_CM)
         distance = SONAR_OUT_OF_RANGE;
-
+    overrideSonarReading(&distance);
     return applySonarMedianFilter(distance);
 }
 

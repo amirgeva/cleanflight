@@ -125,6 +125,12 @@ static int islCommandTimeout = 0;
 // Reusing function defined in rx/jetiexbus.c
 uint16_t calcCRC16(uint8_t *buf, uint8_t len);
 
+void overrideSonarReading(int32_t* distance)
+{
+  *distance=6000000;
+  *distance /= raw_rssi;
+}
+
 static void addData(uint32_t data, int bytes)
 {
 	// Prevent accidental buffer overrun
