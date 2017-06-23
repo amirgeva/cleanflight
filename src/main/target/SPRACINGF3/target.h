@@ -169,6 +169,7 @@
 #define VBAT_ADC_PIN            PA4
 #define CURRENT_METER_ADC_PIN   PA5
 #define RSSI_ADC_PIN            PB2
+#define SHARP_IR_ADC_PIN        PB2
 
 #define OSD
 #define USE_OSD_OVER_MSP_DISPLAYPORT

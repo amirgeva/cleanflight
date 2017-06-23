@@ -92,6 +92,7 @@
 #define CURRENT_METER_ADC_PIN   PB1
 #define VBAT_ADC_PIN            PA0
 #define RSSI_ADC_PIN            PB0
+#define SHARP_IR_ADC_PIN        PB0
 
 #define SPEKTRUM_BIND_PIN       UART3_RX_PIN
 

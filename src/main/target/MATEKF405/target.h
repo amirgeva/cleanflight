@@ -124,6 +124,7 @@
 #define VBAT_ADC_PIN            PC5
 #define CURRENT_METER_ADC_PIN   PC4
 #define RSSI_ADC_PIN            PB1
+#define SHARP_IR_ADC_PIN        PB1
 
 #define DEFAULT_FEATURES        (FEATURE_OSD )
 

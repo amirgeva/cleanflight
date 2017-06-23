@@ -99,6 +99,7 @@
 #define VBAT_ADC_PIN                PA5
 #define CURRENT_METER_ADC_PIN       PB2
 #define RSSI_ADC_PIN                PA6
+#define SHARP_IR_ADC_PIN            PA6
 
 #define DEFAULT_RX_FEATURE      FEATURE_RX_SERIAL
 #define SERIALRX_PROVIDER       SERIALRX_SBUS

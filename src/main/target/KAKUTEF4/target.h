@@ -125,6 +125,7 @@
 #define CURRENT_METER_ADC_CHANNEL   ADC_Channel_12
 
 #define RSSI_ADC_PIN                PC1
+#define SHARP_IR_ADC_PIN            PC1
 #define RSSI_ADC_CHANNEL            ADC_Channel_11
 
 #define DEFAULT_FEATURES        (FEATURE_OSD)

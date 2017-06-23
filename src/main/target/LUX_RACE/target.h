@@ -143,6 +143,7 @@
 #define VBAT_ADC_PIN            PC0
 #define CURRENT_METER_ADC_PIN   PC1
 #define RSSI_ADC_PIN            PC2
+#define SHARP_IR_ADC_PIN        PC2
 #define EXTERNAL1_ADC_PIN       PC3
 
 #define DEFAULT_RX_FEATURE      FEATURE_RX_SERIAL

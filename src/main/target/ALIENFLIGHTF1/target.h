@@ -60,6 +60,7 @@
 #define CURRENT_METER_ADC_PIN   PB1
 #define VBAT_ADC_PIN            PA4
 #define RSSI_ADC_PIN            PA1
+#define SHARP_IR_ADC_PIN        PA1
 #define EXTERNAL1_ADC_PIN       PA5
 
 #define SPEKTRUM_BIND_PIN       PA3

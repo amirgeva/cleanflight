@@ -165,6 +165,7 @@
 #define ADC_INSTANCE            ADC1
 #define VBAT_ADC_PIN            PA0
 #define RSSI_ADC_PIN            PA1
+#define SHARP_IR_ADC_PIN        PA1
 #define CURRENT_METER_ADC_PIN   PA2
 
 #define DEFAULT_RX_FEATURE      FEATURE_RX_PPM

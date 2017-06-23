@@ -154,6 +154,7 @@
 #define VBAT_ADC_PIN            PC0
 #define CURRENT_METER_ADC_PIN   PC1
 #define RSSI_ADC_PIN            PC4
+#define SHARP_IR_ADC_PIN        PC4
 #define EXTERNAL1_ADC_GPIO_PIN  PC5
 
 #define CURRENT_METER_OFFSET_DEFAULT 2500                      // ACS712/714-30A - 0A = 2.5V

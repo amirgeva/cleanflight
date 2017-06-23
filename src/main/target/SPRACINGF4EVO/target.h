@@ -157,6 +157,7 @@
 #define VBAT_ADC_PIN            PC1
 #define CURRENT_METER_ADC_PIN   PC2
 #define RSSI_ADC_PIN            PC0
+#define SHARP_IR_ADC_PIN        PC0
 
 // PC4 - NC - Free for ADC12_IN14 / VTX CS
 // PC5 - NC - Free for ADC12_IN15 / VTX Enable / OSD VSYNC
