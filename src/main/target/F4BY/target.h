@@ -138,7 +138,6 @@
 #define VBAT_ADC_PIN            PC3
 #define CURRENT_METER_ADC_PIN   PC2
 #define RSSI_ADC_PIN            PC1
-#define SHARP_IR_ADC_PIN        PC1
 
 #undef LED_STRIP
 

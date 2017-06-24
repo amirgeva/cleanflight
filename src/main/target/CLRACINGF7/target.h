@@ -116,7 +116,6 @@
 #define CURRENT_METER_ADC_PIN   PC1
 #define VBAT_ADC_PIN            PC2
 #define RSSI_ADC_PIN            PC3
-#define SHARP_IR_ADC_PIN        PC3
 #define CURRENT_METER_SCALE_DEFAULT 250                     // 3/120A  = 25mv/A
 
 // LED strip configuration.

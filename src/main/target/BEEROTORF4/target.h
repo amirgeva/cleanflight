@@ -139,7 +139,6 @@
 #define CURRENT_METER_ADC_PIN   PC1
 
 #define RSSI_ADC_PIN            PC2
-#define SHARP_IR_ADC_PIN        PC2
 
 #define LED_STRIP
 

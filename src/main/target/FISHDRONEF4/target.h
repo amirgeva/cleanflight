@@ -126,7 +126,6 @@
 #define USE_ADC
 #define VBAT_ADC_PIN            PC0
 #define RSSI_ADC_PIN            PC1
-#define SHARP_IR_ADC_PIN        PC1
 
 // *************** FEATURES ************************
 #define DEFAULT_FEATURES        (FEATURE_OSD)

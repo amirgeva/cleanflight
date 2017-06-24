@@ -115,7 +115,6 @@
 #define VBAT_ADC_PIN            PC0
 #define CURRENT_METER_ADC_PIN   PC1
 #define RSSI_ADC_PIN            PC2
-#define SHARP_IR_ADC_PIN        PC2
 #define EXTERNAL1_ADC_PIN       PC3
 
 #define DEFAULT_FEATURES        (FEATURE_FAILSAFE | FEATURE_AIRMODE | FEATURE_LED_STRIP)

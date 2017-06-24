@@ -247,7 +247,6 @@
 
 #if defined(AIRBOTF4SD)
 #define RSSI_ADC_PIN            PA0
-#define SHARP_IR_ADC_PIN        PA0
 #endif
 
 #define TRANSPONDER
