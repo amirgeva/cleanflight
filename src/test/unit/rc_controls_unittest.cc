@@ -25,7 +25,9 @@ extern "C" {
 
     #include "common/maths.h"
     #include "common/axis.h"
+    #include "common/bitarray.h"
 
+    #include "config/parameter_group.h"
     #include "config/parameter_group_ids.h"
 
     #include "blackbox/blackbox.h"
@@ -155,14 +157,14 @@ TEST_F(RcControlsModesTest, updateActivatedModesUsingValidAuxConfigurationAndRXV
     rcData[AUX7] = 950; // value equal to range step upper boundary should not activate the mode
 
     // and
-    uint32_t expectedMask = 0;
-    expectedMask |= (1 << 0);
-    expectedMask |= (1 << 1);
-    expectedMask |= (1 << 2);
-    expectedMask |= (1 << 3);
-    expectedMask |= (1 << 4);
-    expectedMask |= (1 << 5);
-    expectedMask |= (0 << 6);
+    boxBitmask_t activeBoxIds;
+    memset(&activeBoxIds, 0, sizeof(boxBitmask_t));
+    bitArraySet(&activeBoxIds, 0);
+    bitArraySet(&activeBoxIds, 1);
+    bitArraySet(&activeBoxIds, 2);
+    bitArraySet(&activeBoxIds, 3);
+    bitArraySet(&activeBoxIds, 4);
+    bitArraySet(&activeBoxIds, 5);
 
     // when
     updateActivatedModes();
@@ -170,9 +172,9 @@ TEST_F(RcControlsModesTest, updateActivatedModesUsingValidAuxConfigurationAndRXV
     // then
     for (int index = 0; index < CHECKBOX_ITEM_COUNT; index++) {
 #ifdef DEBUG_RC_CONTROLS
-        printf("iteration: %d\n", index);
+        printf("iteration: %d, %d\n", index, (bool)(bitArrayGet(&activeBoxIds, index)));
 #endif
-        EXPECT_EQ((bool)(expectedMask & (1 << index)), IS_RC_MODE_ACTIVE((boxId_e)index));
+        EXPECT_EQ((bool)(bitArrayGet(&activeBoxIds, index)), IS_RC_MODE_ACTIVE((boxId_e)index));
     }
 }
 
@@ -250,7 +252,7 @@ protected:
         adjustmentStateMask = 0;
         memset(&adjustmentStates, 0, sizeof(adjustmentStates));
 
-        PG_RESET_CURRENT(rxConfig);
+        PG_RESET(rxConfig);
         rxConfigMutable()->mincheck = DEFAULT_MIN_CHECK;
         rxConfigMutable()->maxcheck = DEFAULT_MAX_CHECK;
         rxConfigMutable()->midrc = 1500;
@@ -307,7 +309,7 @@ TEST_F(RcControlsAdjustmentsTest, processRcAdjustmentsWithRcRateFunctionSwitchUp
     };
 
     // and
-    PG_RESET_CURRENT(rxConfig);
+    PG_RESET(rxConfig);
     rxConfigMutable()->mincheck = DEFAULT_MIN_CHECK;
     rxConfigMutable()->maxcheck = DEFAULT_MAX_CHECK;
     rxConfigMutable()->midrc = 1500;
@@ -677,8 +679,8 @@ void applyAndSaveAccelerometerTrimsDelta(rollAndPitchTrims_t*) {}
 void handleInflightCalibrationStickPosition(void) {}
 bool feature(uint32_t) { return false;}
 bool sensors(uint32_t) { return false;}
-void mwArm(void) {}
-void mwDisarm(void) {}
+void tryArm(void) {}
+void disarm(void) {}
 void dashboardDisablePageCycling() {}
 void dashboardEnablePageCycling() {}
 
@@ -699,4 +701,5 @@ uint8_t stateFlags = 0;
 int16_t rcData[MAX_SUPPORTED_RC_CHANNEL_COUNT];
 rxRuntimeConfig_t rxRuntimeConfig;
 PG_REGISTER(blackboxConfig_t, blackboxConfig, PG_BLACKBOX_CONFIG, 0);
+void resetArmingDisabled(void) {}
 }

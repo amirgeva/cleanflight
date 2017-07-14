@@ -27,16 +27,16 @@
 #define USBD_PRODUCT_STRING                 "SP Racing F4 NEO"
 
 #if (SPRACINGF4NEO_REV >= 3)
-    #define LED0                            PA0
-    #define LED1                            PB1
+    #define LED0_PIN                        PA0
+    #define LED1_PIN                        PB1
 #endif
 #if (SPRACINGF4NEO_REV == 2)
-    #define LED0                            PB9
-    #define LED1                            PB2
+    #define LED0_PIN                        PB9
+    #define LED1_PIN                        PB2
 #endif
 #if (SPRACINGF4NEO_REV == 1)
-    #define LED0                            PB9
-    #define LED1                            PB2
+    #define LED0_PIN                        PB9
+    #define LED1_PIN                        PB2
 #endif
 
 #define BEEPER                              PC15
@@ -152,9 +152,9 @@
 #define MAX7456_SPI_INSTANCE                SPI3
 #define MAX7456_SPI_CS_PIN                  PA15
 
-//#define MAX7456_DMA_CHANNEL_TX              DMA1_Stream5
-//#define MAX7456_DMA_CHANNEL_RX              DMA1_Stream0
-//#define MAX7456_DMA_IRQ_HANDLER_ID          DMA1_ST0_HANDLER
+#define MAX7456_DMA_CHANNEL_TX              DMA1_Stream5
+#define MAX7456_DMA_CHANNEL_RX              DMA1_Stream0
+#define MAX7456_DMA_IRQ_HANDLER_ID          DMA1_ST0_HANDLER
 
 #define USE_SDCARD
 #define USE_SDCARD_SPI2
@@ -213,8 +213,6 @@
 #else
     #define BUTTON_A_PIN                    PB8
 #endif
-
-#define SPEKTRUM_BIND_PIN                   UART2_RX_PIN
 
 // FIXME While it's possible to use the button on the OSD/VTX board for binding enabling it here will break binding unless you have the OSD/VTX connected.
 //#define BINDPLUG_PIN                        BUTTON_A_PIN

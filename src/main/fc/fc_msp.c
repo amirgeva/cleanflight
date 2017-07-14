@@ -150,9 +150,13 @@ static const box_t boxes[CHECKBOX_ITEM_COUNT] = {
     { BOXBLACKBOX, "BLACKBOX", 26 },
     { BOXFAILSAFE, "FAILSAFE", 27 },
     { BOXAIRMODE, "AIR MODE", 28 },
-    { BOX3DDISABLESWITCH, "DISABLE 3D SWITCH", 29},
+    { BOX3DDISABLE, "DISABLE 3D", 29},
     { BOXFPVANGLEMIX, "FPV ANGLE MIX", 30},
     { BOXBLACKBOXERASE, "BLACKBOX ERASE (>30s)", 31 },
+    { BOXCAMERA1, "CAMERA CONTROL 1", 32},
+    { BOXCAMERA2, "CAMERA CONTROL 2", 33},
+    { BOXCAMERA3, "CAMERA CONTROL 3", 34 },
+    { BOXDSHOTREVERSE, "DSHOT REVERSE MOTORS", 35 },
 };
 
 // mask of enabled IDs, calculated on startup based on enabled features. boxId_e is used as bit index
@@ -211,7 +215,7 @@ static void mspFc4waySerialCommand(sbuf_t *dst, sbuf_t *src, mspPostProcessFnPtr
         escPortIndex = sbufReadU8(src);
     }
 
-    switch(escMode) {
+    switch (escMode) {
     case ESC_4WAY:
         // get channel number
         // switch all motor lines HI
@@ -229,7 +233,7 @@ static void mspFc4waySerialCommand(sbuf_t *dst, sbuf_t *src, mspPostProcessFnPtr
     case PROTOCOL_KISS:
     case PROTOCOL_KISSALL:
     case PROTOCOL_CASTLE:
-        if (escPortIndex < getMotorCount() || (escMode == PROTOCOL_KISS && escPortIndex == ALL_ESCS)) {
+        if (escPortIndex < getMotorCount() || (escMode == PROTOCOL_KISS && escPortIndex == ALL_MOTORS)) {
             sbufWriteU8(dst, 1);
 
             if (mspPostProcessFn) {
@@ -281,7 +285,7 @@ const box_t *findBoxByPermanentId(uint8_t permanentId)
 
 static bool activeBoxIdGet(boxId_e boxId)
 {
-    if(boxId > sizeof(activeBoxIds) * 8)
+    if (boxId > sizeof(activeBoxIds) * 8)
         return false;
     return bitArrayGet(&activeBoxIds, boxId);
 }
@@ -325,7 +329,7 @@ void initActiveBoxIds(void)
     memset(&ena, 0, sizeof(ena));
 
     // macro to enable boxId (BoxidMaskEnable). Reference to ena is hidden, local use only
-#define BME(boxId) do { bitArraySet(&ena, boxId); } while(0)
+#define BME(boxId) do { bitArraySet(&ena, boxId); } while (0)
     BME(BOXARM);
 
     if (!feature(FEATURE_AIRMODE)) {
@@ -393,7 +397,13 @@ void initActiveBoxIds(void)
 
     BME(BOXFPVANGLEMIX);
 
-    BME(BOX3DDISABLESWITCH);
+    if (feature(FEATURE_3D)) {
+        BME(BOX3DDISABLE);
+    }
+
+    if (isMotorProtocolDshot()) {
+        BME(BOXDSHOTREVERSE);
+    }
 
     if (feature(FEATURE_SERVO_TILT)) {
         BME(BOXCAMSTAB);
@@ -417,6 +427,12 @@ void initActiveBoxIds(void)
         BME(BOXSERVO2);
         BME(BOXSERVO3);
     }
+#endif
+
+#ifdef USE_RCSPLIT
+    BME(BOXCAMERA1);
+    BME(BOXCAMERA2);
+    BME(BOXCAMERA3);
 #endif
 
 #undef BME
@@ -459,7 +475,7 @@ static int packFlightModeFlags(boxBitmask_t *mspFlightModeFlags)
     const uint64_t rcModeCopyMask = BM(BOXHEADADJ) | BM(BOXCAMSTAB) | BM(BOXCAMTRIG) | BM(BOXBEEPERON)
         | BM(BOXLEDMAX) | BM(BOXLEDLOW) | BM(BOXLLIGHTS) | BM(BOXCALIB) | BM(BOXGOV) | BM(BOXOSD)
         | BM(BOXTELEMETRY) | BM(BOXGTUNE) | BM(BOXBLACKBOX) | BM(BOXBLACKBOXERASE) | BM(BOXAIRMODE)
-        | BM(BOXANTIGRAVITY) | BM(BOXFPVANGLEMIX);
+        | BM(BOXANTIGRAVITY) | BM(BOXFPVANGLEMIX) | BM(BOXDSHOTREVERSE) | BM(BOX3DDISABLE);
     STATIC_ASSERT(sizeof(rcModeCopyMask) * 8 >= CHECKBOX_ITEM_COUNT, copy_mask_too_small_for_boxes);
     for (unsigned i = 0; i < CHECKBOX_ITEM_COUNT; i++) {
         if ((rcModeCopyMask & BM(i))    // mode copy is enabled
@@ -829,16 +845,31 @@ static bool mspCommonProcessOutCommand(uint8_t cmdMSP, sbuf_t *dst, mspPostProce
 
 #ifdef OSD
         // OSD specific, not applicable to OSD slaves.
+
+        // Configuration
         sbufWriteU8(dst, osdConfig()->units);
+
+        // Alarms
         sbufWriteU8(dst, osdConfig()->rssi_alarm);
         sbufWriteU16(dst, osdConfig()->cap_alarm);
-        sbufWriteU16(dst, osdConfig()->time_alarm);
+        sbufWriteU16(dst, 0);
         sbufWriteU16(dst, osdConfig()->alt_alarm);
+
+        // Element position and visibility
         for (int i = 0; i < OSD_ITEM_COUNT; i++) {
             sbufWriteU16(dst, osdConfig()->item_pos[i]);
         }
+
+        // Post flight statistics
+        sbufWriteU8(dst, OSD_STAT_COUNT);
         for (int i = 0; i < OSD_STAT_COUNT; i++ ) {
             sbufWriteU8(dst, osdConfig()->enabled_stats[i]);
+        }
+
+        // Timers
+        sbufWriteU8(dst, OSD_TIMER_COUNT);
+        for (int i = 0; i < OSD_TIMER_COUNT; i++) {
+            sbufWriteU16(dst, osdConfig()->timers[i]);
         }
 #endif
         break;
@@ -901,7 +932,7 @@ static bool mspFcProcessOutCommand(uint8_t cmdMSP, sbuf_t *dst, mspPostProcessFn
 #else
             sbufWriteU16(dst, 0);
 #endif
-            sbufWriteU16(dst, sensors(SENSOR_ACC) | sensors(SENSOR_BARO) << 1 | sensors(SENSOR_MAG) << 2 | sensors(SENSOR_GPS) << 3 | sensors(SENSOR_SONAR) << 4);
+            sbufWriteU16(dst, sensors(SENSOR_ACC) | sensors(SENSOR_BARO) << 1 | sensors(SENSOR_MAG) << 2 | sensors(SENSOR_GPS) << 3 | sensors(SENSOR_SONAR) << 4 | sensors(SENSOR_GYRO) << 5);
             sbufWriteData(dst, &flightModeFlags, 4);        // unconditional part of flags, first 32 bits
             sbufWriteU8(dst, getCurrentPidProfileIndex());
             sbufWriteU16(dst, constrain(averageSystemLoadPercent, 0, 100));
@@ -1102,12 +1133,12 @@ static bool mspFcProcessOutCommand(uint8_t cmdMSP, sbuf_t *dst, mspPostProcessFn
 
     case MSP_RAW_GPS:
         sbufWriteU8(dst, STATE(GPS_FIX));
-        sbufWriteU8(dst, GPS_numSat);
-        sbufWriteU32(dst, GPS_coord[LAT]);
-        sbufWriteU32(dst, GPS_coord[LON]);
-        sbufWriteU16(dst, GPS_altitude);
-        sbufWriteU16(dst, GPS_speed);
-        sbufWriteU16(dst, GPS_ground_course);
+        sbufWriteU8(dst, gpsSol.numSat);
+        sbufWriteU32(dst, gpsSol.llh.lat);
+        sbufWriteU32(dst, gpsSol.llh.lon);
+        sbufWriteU16(dst, gpsSol.llh.alt);
+        sbufWriteU16(dst, gpsSol.groundSpeed);
+        sbufWriteU16(dst, gpsSol.groundCourse);
         break;
 
     case MSP_COMP_GPS:
@@ -1118,12 +1149,12 @@ static bool mspFcProcessOutCommand(uint8_t cmdMSP, sbuf_t *dst, mspPostProcessFn
 
     case MSP_GPSSVINFO:
         sbufWriteU8(dst, GPS_numCh);
-           for (int i = 0; i < GPS_numCh; i++) {
-               sbufWriteU8(dst, GPS_svinfo_chn[i]);
-               sbufWriteU8(dst, GPS_svinfo_svid[i]);
-               sbufWriteU8(dst, GPS_svinfo_quality[i]);
-               sbufWriteU8(dst, GPS_svinfo_cno[i]);
-           }
+       for (int i = 0; i < GPS_numCh; i++) {
+           sbufWriteU8(dst, GPS_svinfo_chn[i]);
+           sbufWriteU8(dst, GPS_svinfo_svid[i]);
+           sbufWriteU8(dst, GPS_svinfo_quality[i]);
+           sbufWriteU8(dst, GPS_svinfo_cno[i]);
+       }
         break;
 #endif
 
@@ -1174,7 +1205,7 @@ static bool mspFcProcessOutCommand(uint8_t cmdMSP, sbuf_t *dst, mspPostProcessFn
         break;
 
     case MSP_RX_MAP:
-        sbufWriteData(dst, rxConfig()->rcmap, MAX_MAPPABLE_RX_INPUTS);
+        sbufWriteData(dst, rxConfig()->rcmap, RX_MAPPABLE_CHANNEL_COUNT);
         break;
 
     case MSP_CF_SERIAL_CONFIG:
@@ -1812,11 +1843,11 @@ static mspResult_e mspFcProcessInCommand(uint8_t cmdMSP, sbuf_t *src)
         } else {
             DISABLE_STATE(GPS_FIX);
         }
-        GPS_numSat = sbufReadU8(src);
-        GPS_coord[LAT] = sbufReadU32(src);
-        GPS_coord[LON] = sbufReadU32(src);
-        GPS_altitude = sbufReadU16(src);
-        GPS_speed = sbufReadU16(src);
+        gpsSol.numSat = sbufReadU8(src);
+        gpsSol.llh.lat = sbufReadU32(src);
+        gpsSol.llh.lon = sbufReadU32(src);
+        gpsSol.llh.alt = sbufReadU16(src);
+        gpsSol.groundSpeed = sbufReadU16(src);
         GPS_update |= 2;        // New data signalisation to GPS functions // FIXME Magic Numbers
         break;
 
@@ -1914,7 +1945,7 @@ static mspResult_e mspFcProcessInCommand(uint8_t cmdMSP, sbuf_t *src)
         break;
 
     case MSP_SET_RX_MAP:
-        for (int i = 0; i < MAX_MAPPABLE_RX_INPUTS; i++) {
+        for (int i = 0; i < RX_MAPPABLE_CHANNEL_COUNT; i++) {
             rxConfigMutable()->rcmap[i] = sbufReadU8(src);
         }
         break;
@@ -2107,11 +2138,23 @@ static mspResult_e mspCommonProcessInCommand(uint8_t cmdMSP, sbuf_t *src)
 #endif
 #if defined(OSD)
                 osdConfigMutable()->units = sbufReadU8(src);
+
+                // Alarms
                 osdConfigMutable()->rssi_alarm = sbufReadU8(src);
                 osdConfigMutable()->cap_alarm = sbufReadU16(src);
-                osdConfigMutable()->time_alarm = sbufReadU16(src);
+                sbufReadU16(src); // Skip unused (previously fly timer)
                 osdConfigMutable()->alt_alarm = sbufReadU16(src);
 #endif
+            } else if ((int8_t)addr == -2) {
+#if defined(OSD)
+                // Timers
+                uint8_t index = sbufReadU8(src);
+                if (index > OSD_TIMER_COUNT) {
+                  return MSP_RESULT_ERROR;
+                }
+                osdConfigMutable()->timers[index] = sbufReadU16(src);
+#endif
+                return MSP_RESULT_ERROR;
             } else {
 #if defined(OSD)
                 const uint16_t value = sbufReadU16(src);
@@ -2125,6 +2168,8 @@ static mspResult_e mspCommonProcessInCommand(uint8_t cmdMSP, sbuf_t *src)
                 } else if (addr < OSD_ITEM_COUNT) {
                     /* Set element positions */
                     osdConfigMutable()->item_pos[addr] = value;
+                } else {
+                  return MSP_RESULT_ERROR;
                 }
 #else
                 return MSP_RESULT_ERROR;
