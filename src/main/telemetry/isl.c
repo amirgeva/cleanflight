@@ -71,6 +71,8 @@
 #include "telemetry/telemetry.h"
 #include "telemetry/isl.h"
 
+//#include "build/debug.h"
+
 // Rate is 100 Hz
 #define TELEMETRY_ISL_MAXRATE 100
 #define TELEMETRY_ISL_DELAY ((1000 * 1000) / TELEMETRY_ISL_MAXRATE)
@@ -86,12 +88,12 @@ static portSharing_e islPortSharing;
 #define ISL_BUFFER_SIZE 64
 
 /*
- *		Valid buffer structure (out/in) is:
- *		Byte 0 = 0xFE  \
- *		Byte 1 = 0xED   \  4 bytes of the MAGIC header
- *		Byte 2 = 0xBE   /
- *		Byte 3 = 0xEF  /
- *		Bytes 4-61 = Payload (58 bytes)
+ *        Valid buffer structure (out/in) is:
+ *        Byte 0 = 0xFE  \
+ *        Byte 1 = 0xED   \  4 bytes of the MAGIC header
+ *        Byte 2 = 0xBE   /
+ *        Byte 3 = 0xEF  /
+ *        Bytes 4-61 = Payload (58 bytes)
  *      Byte 62 = LSB of CRC16 of entire payload 58 bytes
  *      Byte 63 = MSB of CRC16 of entire payload 58 bytes
  */
@@ -104,10 +106,10 @@ static uint8_t islOutBuffer[ISL_BUFFER_SIZE];
 static uint8_t islInBuffer[ISL_BUFFER_SIZE];
 
 // Actual RC channels coming in from radio
-static uint16_t rcin[8];
+static uint16_t rcin[8]={0,0,0,0,0,0,0,0};
 
 // Override commands for RC channels
-static uint16_t rccmd[8];
+static uint16_t rccmd[8]={0,0,0,0,0,0,0,0};
 
 // Next index in islInBuffer to write incoming bytes.  
 // When this reaches ISL_BUFFER_SIZE, the buffer is full and should be processed.
@@ -133,51 +135,51 @@ void overrideSonarReading(int32_t* distance)
 
 static void addData(uint32_t data, int bytes)
 {
-	// Prevent accidental buffer overrun
-	if ((islOutBufferCursor+bytes) > ISL_BUFFER_SIZE) return;
-	
-	for(int i=0;i<bytes;++i)
-	{
-		islOutBuffer[islOutBufferCursor++]=(data&0xFF);
-		data=(data>>8);
-	}
+    // Prevent accidental buffer overrun
+    if ((islOutBufferCursor+bytes) > ISL_BUFFER_SIZE) return;
+    
+    for(int i=0;i<bytes;++i)
+    {
+        islOutBuffer[islOutBufferCursor++]=(data&0xFF);
+        data=(data>>8);
+    }
 }
 
 static void islSerialWriteBuffer()
 {
-	// Clear unused part of the buffer
-	while(islOutBufferCursor<(ISL_BUFFER_SIZE-2))
-		islOutBuffer[islOutBufferCursor++]=0;
-	islOutBufferCursor=(ISL_BUFFER_SIZE-2);
-	
-	// Calculate CRC of payload (skip 4 header bytes, ignore last 2 crc bytes)
-	uint16_t crc=calcCRC16(islOutBuffer+4,ISL_BUFFER_SIZE-6);
-	addData(crc,sizeof(uint16_t));
-	
-	// Write to serial
+    // Clear unused part of the buffer
+    while(islOutBufferCursor<(ISL_BUFFER_SIZE-2))
+        islOutBuffer[islOutBufferCursor++]=0;
+    islOutBufferCursor=(ISL_BUFFER_SIZE-2);
+    
+    // Calculate CRC of payload (skip 4 header bytes, ignore last 2 crc bytes)
+    uint16_t crc=calcCRC16(islOutBuffer+4,ISL_BUFFER_SIZE-6);
+    addData(crc,sizeof(uint16_t));
+    
+    // Write to serial
     for (int i = 0; i < ISL_BUFFER_SIZE; i++)
         serialWrite(islPort, islOutBuffer[i]);
 }
 
 typedef struct isl_command_s {
-	uint8_t header[4];
-	uint16_t rccmd[8];
+    uint8_t header[4];
+    uint16_t rccmd[8];
 } isl_command_t;
 
 typedef struct isl_telemetry_s {
-	uint8_t  header[4];         //  4 bytes header
-	
-	uint32_t acc[3];            // 12 bytes  \ 4 byte data types first
-	float    gyro[3];           // 12 bytes  / to avoid alignment problems
-	uint16_t roll,pitch,yaw;    //  6 bytes
-	uint16_t rcin[8];           // 16 bytes
-	uint16_t rssi;              //  2 bytes
-	uint16_t altitude;          //  2 bytes
-	////////////////////// Total = 50 bytes for payload
-	uint8_t  ecc[8];
-	uint16_t crc;               // 10 bytes total suffix
-	                            //
-								// Total 4 + 50 + 10 = 64 bytes
+    uint8_t  header[4];         //  4 bytes header
+    
+    uint32_t acc[3];            // 12 bytes  \ 4 byte data types first
+    float    gyro[3];           // 12 bytes  / to avoid alignment problems
+    uint16_t roll,pitch,yaw;    //  6 bytes
+    uint16_t rcin[8];           // 16 bytes
+    uint16_t rssi;              //  2 bytes
+    uint16_t altitude;          //  2 bytes
+    ////////////////////// Total = 50 bytes for payload
+    uint8_t  ecc[8];
+    uint16_t crc;               // 10 bytes total suffix
+                                //
+                                // Total 4 + 50 + 10 = 64 bytes
 } isl_telemetry_t;
 
 // Following line checks that the struct is 64 bytes at compile time.
@@ -198,32 +200,32 @@ static void processISLTelemetry(void)
     for(int i=0;i<8;++i) 
         t->rcin[i]=rcin[i];
     t->rssi = raw_rssi;
-    t->altitude = 0;
+    t->altitude = getEstimatedAltitude();
     const uint8_t* payload=islOutBuffer+4;
     // Add simple XOR based error correction code
     for(int i=0;i<8;++i) t->ecc[i]=0;
     for(int i=0;i<50;++i)
         t->ecc[i/8]^=payload[i];
     islOutBufferCursor=sizeof(isl_telemetry_t);
-	islSerialWriteBuffer();
+    islSerialWriteBuffer();
 }
 
 static void analyzeIncomingData(void)
 {
-	uint16_t crc=calcCRC16(islInBuffer+4,ISL_BUFFER_SIZE-6);
-	if (( crc    &0xFF) != islInBuffer[ISL_BUFFER_SIZE-2]) return; // Invalid CRC
-	if (((crc>>8)&0xFF) != islInBuffer[ISL_BUFFER_SIZE-1]) return; // Invalid CRC
-	
-	// Reset timeout counter, since we just got a valid command
-	islCommandTimeout=0;
-	
-	isl_command_t* c=(isl_command_t*)islInBuffer;
-	for(int i=0;i<8;++i)
-	{
-		// 0xFFFF means no change to existing value
-		if (c->rccmd[i]!=0xFFFF)
-			rccmd[i]=c->rccmd[i];
-	}
+    uint16_t crc=calcCRC16(islInBuffer+4,ISL_BUFFER_SIZE-6);
+    if (( crc    &0xFF) != islInBuffer[ISL_BUFFER_SIZE-2]) { return; } // Invalid CRC
+    if (((crc>>8)&0xFF) != islInBuffer[ISL_BUFFER_SIZE-1]) { return; } // Invalid CRC
+    
+    // Reset timeout counter, since we just got a valid command
+    islCommandTimeout=0;
+    
+    isl_command_t* c=(isl_command_t*)islInBuffer;
+    for(int i=0;i<4;++i)
+    {
+        // 0xFFFF means no change to existing value
+        if (c->rccmd[i]!=0xFFFF)
+            rccmd[i]=c->rccmd[i];
+    }
 }
 
 // This is a safety function.  If no command has arrived in the past second,
@@ -231,63 +233,66 @@ static void analyzeIncomingData(void)
 // and you cannot resume manual control.
 static void checkCommandTimeout(void)
 {
-	if (++islCommandTimeout>=100) // Function called at 100Hz,  100 * 10ms = 1 second
-	{
-		islCommandTimeout=0;
-		for(int i=0;i<8;++i)
-			rccmd[i]=0;
-	}
+    if (++islCommandTimeout>=100) // Function called at 100Hz,  100 * 10ms = 1 second
+    {
+        islCommandTimeout=0;
+        for(int i=0;i<8;++i)
+            rccmd[i]=0;
+    }
 }
 
 static void processIncomingData(void)
 {
-	checkCommandTimeout();
-	uint32_t avail = serialRxBytesWaiting(islPort);
-	for(uint32_t i=0;i<avail;++i)
-	{
-		islInBuffer[islInBufferCursor]=serialRead(islPort);
-		if (islInBufferCursor<4)
-		{
-			if (islInBuffer[islInBufferCursor] == MAGIC[islInBufferCursor])
-				++islInBufferCursor;
-			else
-				islInBufferCursor=0;
-		}
-		else
-		{
-			// We're past the header
-			if (++islInBufferCursor == ISL_BUFFER_SIZE)
-			{
-				// Buffer is full, analyze it
-				analyzeIncomingData();
-				// Reset cursor for next buffer
-				islInBufferCursor=0;
-			}
-		}
-	}
+    checkCommandTimeout();
+    uint32_t avail = serialRxBytesWaiting(islPort);
+    for(uint32_t i=0;i<avail;++i)
+    {
+        islInBuffer[islInBufferCursor]=serialRead(islPort);
+        if (islInBufferCursor<4)
+        {
+            if (islInBuffer[islInBufferCursor] == MAGIC[islInBufferCursor])
+                ++islInBufferCursor;
+            else
+            {
+                islInBufferCursor=0;
+            }
+        }
+        else
+        {
+            // We're past the header
+            if (++islInBufferCursor == ISL_BUFFER_SIZE)
+            {
+                // Buffer is full, analyze it
+                analyzeIncomingData();
+                // Reset cursor for next buffer
+                islInBufferCursor=0;
+            }
+        }
+    }
 }
 
 uint16_t applyRxChannelOverride(int channel, uint16_t sample)
 {
-	if (!islTelemetryEnabled) return sample;
-	if (channel<0 || channel>=8) return sample;
-	// Store actual sample for telemetry
-	rcin[channel]=sample;
-	// If there is override, use that
-	if (rccmd[channel]>0) return rccmd[channel];
-	// Default is no action
-	return sample;
+    //return sample;
+    if (!islTelemetryEnabled) return sample;
+    if (channel<0 || channel>=8) return sample;
+    // Store actual sample for telemetry
+    rcin[channel]=sample;
+    // If there is override, use that
+    if (rccmd[channel]>0) return rccmd[channel];
+    // Default is no action
+    return sample;
 }
 
 void initISLTelemetry(void)
 {
+    for(int i=0;i<8;++i)
+    {
+        rcin[i]=0;
+        rccmd[i]=0;
+    }
     portConfig = findSerialPortConfig(FUNCTION_TELEMETRY_ISL);
     islPortSharing = determinePortSharing(portConfig, FUNCTION_TELEMETRY_ISL);
-	for(int i=0;i<8;++i)
-	{
-		rcin[i]=0;
-		rccmd[i]=0;
-	}
 }
 
 void handleISLTelemetry(void)
@@ -297,7 +302,7 @@ void handleISLTelemetry(void)
 
     uint32_t now = micros();
     if ((now - lastISLMessage) >= TELEMETRY_ISL_DELAY) {
-		processIncomingData();
+        processIncomingData();
         processISLTelemetry();
         lastISLMessage = now;
     }
@@ -339,7 +344,7 @@ void configureISLTelemetryPort(void)
     }
 
     islPort = openSerialPort(portConfig->identifier, FUNCTION_TELEMETRY_ISL, NULL, 
-	                         baudRates[baudRateIndex], MODE_RXTX, SERIAL_NOT_INVERTED);
+                             baudRates[baudRateIndex], MODE_RXTX, SERIAL_NOT_INVERTED);
 
     if (!islPort) return;
 
