@@ -132,7 +132,7 @@
 #define SERIAL_PORT_COUNT       6 //VCP, USART1, USART3, USART6, SOFTSERIAL x 2
 
 #define USE_ESCSERIAL
-#define ESCSERIAL_TIMER_TX_HARDWARE 0 // PWM 1
+#define ESCSERIAL_TIMER_TX_PIN  PA3  // (HARDARE=0)
 
 #define USE_SPI
 
@@ -152,13 +152,13 @@
 #define SPI3_MISO_PIN           PC11
 #define SPI3_MOSI_PIN           PC12
 
-/* 
+/*
 #define USE_I2C
 #define USE_I2C_DEVICE_1
 #define I2C_DEVICE              (I2CDEV_1)
 #define USE_I2C_PULLUP
 #define I2C1_SCL                PB6
-#define I2C1_SDA                PB7 
+#define I2C1_SDA                PB7
 */
 
 #define LED_STRIP
@@ -191,4 +191,3 @@
 
 #define CMS
 #define USE_MSP_DISPLAYPORT
-

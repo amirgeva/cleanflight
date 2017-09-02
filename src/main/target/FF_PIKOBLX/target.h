@@ -23,7 +23,7 @@
 #define TARGET_BOARD_IDENTIFIER "KOMB" // Furious FPV KOMBINI
 #elif defined(FF_ACROWHOOPSP)
 #define TARGET_BOARD_IDENTIFIER "AWHS" // Furious FPV ACROWHOOP SPEKTRUM
-#else 
+#else
 #define TARGET_BOARD_IDENTIFIER "PIKO" // Furious FPV PIKOBLX
 #endif
 
@@ -65,7 +65,11 @@
 #define SERIAL_PORT_COUNT       6
 
 #define USE_ESCSERIAL
-#define ESCSERIAL_TIMER_TX_HARDWARE 0 // PWM 1
+#if defined(FF_RADIANCE) || defined(FF_KOMBINI)
+#define ESCSERIAL_TIMER_TX_PIN  PA7  // (Hardware=0)
+#else
+#define ESCSERIAL_TIMER_TX_PIN  PA4  // (Hardware=0)
+#endif
 
 #define UART1_TX_PIN            PB6
 #define UART1_RX_PIN            PB7

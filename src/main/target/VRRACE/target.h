@@ -60,10 +60,6 @@
 
 /*
 #define SDCARD_DETECT_PIN                   PD2
-#define SDCARD_DETECT_EXTI_LINE             EXTI_Line2
-#define SDCARD_DETECT_EXTI_PIN_SOURCE       EXTI_PinSource2
-#define SDCARD_DETECT_EXTI_PORT_SOURCE      EXTI_PortSourceGPIOD
-#define SDCARD_DETECT_EXTI_IRQn             EXTI2_IRQn
 
 #define SDCARD_SPI_INSTANCE                 SPI3
 #define SDCARD_SPI_CS_PIN                   PB3
@@ -123,7 +119,7 @@
 #define SERIAL_PORT_COUNT 8 //VCP, USART1, USART2, USART3, USART6, SOFTSERIAL x 2
 
 #define USE_ESCSERIAL
-#define ESCSERIAL_TIMER_TX_HARDWARE 0 // PWM 1
+#define ESCSERIAL_TIMER_TX_PIN  PE9  // (HARDARE=0,PPM)
 
 
 #define USE_SPI

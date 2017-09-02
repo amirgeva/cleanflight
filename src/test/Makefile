@@ -31,6 +31,14 @@ altitude_hold_unittest_SRC :=  \
 		$(USER_DIR)/flight/altitude.c
 
 
+arming_prevention_unittest_SRC := \
+		$(USER_DIR)/fc/fc_core.c \
+		$(USER_DIR)/fc/rc_controls.c \
+		$(USER_DIR)/fc/rc_modes.c \
+		$(USER_DIR)/fc/runtime_config.c \
+		$(USER_DIR)/common/bitarray.c
+
+
 baro_bmp085_unittest_SRC := \
 		$(USER_DIR)/drivers/barometer/barometer_bmp085.c \
 		$(USER_DIR)/drivers/io.c
@@ -39,15 +47,33 @@ baro_bmp085_unittest_SRC := \
 baro_bmp280_unittest_SRC := \
 		$(USER_DIR)/drivers/barometer/barometer_bmp280.c
 
+baro_bmp280_unittest_DEFINES := \
+                USE_BARO \
+                USE_BARO_BMP280 \
+                USE_BARO_SPI_BMP280
 
 baro_ms5611_unittest_SRC := \
 		$(USER_DIR)/drivers/barometer/barometer_ms5611.c
 
+baro_ms5611_unittest_DEFINES := \
+                USE_BARO \
+                USE_BARO_MS5611 \
+                USE_BARO_SPI_MS5611
 
 battery_unittest_SRC := \
 		$(USER_DIR)/sensors/battery.c \
 		$(USER_DIR)/common/maths.c
 
+
+blackbox_unittest_SRC :=  \
+		$(USER_DIR)/blackbox/blackbox.c \
+		$(USER_DIR)/blackbox/blackbox_encoding.c \
+		$(USER_DIR)/blackbox/blackbox_io.c \
+		$(USER_DIR)/common/encoding.c \
+		$(USER_DIR)/common/printf.c \
+		$(USER_DIR)/common/maths.c \
+		$(USER_DIR)/common/typeconversion.c \
+		$(USER_DIR)/drivers/gyro_sync.c
 
 blackbox_encoding_unittest_SRC :=  \
 		$(USER_DIR)/blackbox/blackbox_encoding.c \
@@ -55,6 +81,16 @@ blackbox_encoding_unittest_SRC :=  \
 		$(USER_DIR)/common/printf.c \
 		$(USER_DIR)/common/typeconversion.c
 
+cli_unittest_SRC := \
+		$(USER_DIR)/fc/cli.c \
+		$(USER_DIR)/config/feature.c \
+		$(USER_DIR)/config/parameter_group.c \
+                $(USER_DIR)/common/typeconversion.c
+
+cli_unittest_DEFINES := \
+		USE_CLI \
+		SystemCoreClock=1000000 \
+		OSD
 
 cms_unittest_SRC := \
 		$(USER_DIR)/cms/cms.c \
@@ -138,7 +174,8 @@ rc_controls_unittest_SRC := \
 
 rx_crsf_unittest_SRC := \
 		$(USER_DIR)/rx/crsf.c \
-		$(USER_DIR)/common/maths.c
+		$(USER_DIR)/common/crc.c \
+		$(USER_DIR)/common/streambuf.c
 
 
 rx_ibus_unittest_SRC := \
@@ -161,12 +198,15 @@ rx_rx_unittest_SRC := \
 
 
 scheduler_unittest_SRC := \
-		$(USER_DIR)/scheduler/scheduler.c
+		$(USER_DIR)/scheduler/scheduler.c \
+		$(USER_DIR)/common/crc.c \
+		$(USER_DIR)/common/streambuf.c
 
 
 telemetry_crsf_unittest_SRC := \
 		$(USER_DIR)/rx/crsf.c \
 		$(USER_DIR)/telemetry/crsf.c \
+		$(USER_DIR)/common/crc.c \
 		$(USER_DIR)/common/maths.c \
 		$(USER_DIR)/common/streambuf.c \
 		$(USER_DIR)/common/gps_conversion.c \
@@ -209,6 +249,13 @@ rcsplit_unittest_SRC := \
 rcsplit_unitest_DEFINES := \
 		USE_UART3 \
 		USE_RCSPLIT \
+
+huffman_unittest_SRC := \
+		$(USER_DIR)/common/huffman.c \
+		$(USER_DIR)/common/huffman_table.c
+
+huffman_unittest_DEFINES := \
+		USE_HUFFMAN
 
 # Please tweak the following variable definitions as needed by your
 # project, except GTEST_HEADERS, which you can use in your own targets
@@ -412,4 +459,3 @@ endef
 
 #apply the canned recipe above to all tests
 $(eval $(foreach test,$(TESTS),$(call test-specific-stuff,$(test))))
-

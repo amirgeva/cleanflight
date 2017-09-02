@@ -76,7 +76,7 @@
     #define USE_MAX7456
     #define MAX7456_SPI_INSTANCE    SPI2
     #define MAX7456_SPI_CS_PIN      PB12
-    #define MAX7456_SPI_CLK         (SPI_CLOCK_STANDARD*2)
+    #define MAX7456_SPI_CLK         (SPI_CLOCK_STANDARD) // 10MHz
     #define MAX7456_RESTORE_CLK     (SPI_CLOCK_FAST)
 
     #define ENABLE_BLACKBOX_LOGGING_ON_SPIFLASH_BY_DEFAULT
@@ -144,7 +144,7 @@
 #define SERIAL_PORT_COUNT       6 //VCP, USART1, USART3, USART6, SOFTSERIAL x 2
 
 #define USE_ESCSERIAL
-#define ESCSERIAL_TIMER_TX_HARDWARE 0 // PWM 1
+#define ESCSERIAL_TIMER_TX_PIN  PC9  // (HARDARE=0,PPM)
 
 #define USE_SPI
 
@@ -187,4 +187,4 @@
 #define TARGET_IO_PORTD         (BIT(2))
 
 #define USABLE_TIMER_CHANNEL_COUNT 6
-#define USED_TIMERS             ( TIM_N(2) | TIM_N(3) | TIM_N(5) | TIM_N(8) )
+#define USED_TIMERS             ( TIM_N(1) | TIM_N(2) | TIM_N(3) | TIM_N(5) | TIM_N(8) )

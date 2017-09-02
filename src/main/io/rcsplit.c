@@ -27,36 +27,38 @@
 #include "config/parameter_group.h"
 #include "config/parameter_group_ids.h"
 
+#include "drivers/serial.h"
+
 #include "fc/rc_controls.h"
+#include "fc/rc_modes.h"
 
 #include "io/beeper.h"
+#include "io/rcsplit.h"
 #include "io/serial.h"
 
 #include "scheduler/scheduler.h"
 
-#include "drivers/serial.h"
-
-#include "io/rcsplit.h"
 
 // communicate with camera device variables
-serialPort_t *rcSplitSerialPort = NULL;
-rcsplitSwitchState_t switchStates[BOXCAMERA3 - BOXCAMERA1 + 1];
-rcsplitState_e cameraState = RCSPLIT_STATE_UNKNOWN;
+STATIC_UNIT_TESTED serialPort_t *rcSplitSerialPort = NULL;
+STATIC_UNIT_TESTED rcsplitState_e cameraState = RCSPLIT_STATE_UNKNOWN;
+// only for unit test
+STATIC_UNIT_TESTED rcsplitSwitchState_t switchStates[BOXCAMERA3 - BOXCAMERA1 + 1];
 
 static uint8_t crc_high_first(uint8_t *ptr, uint8_t len)
 {
-    uint8_t i; 
+    uint8_t i;
     uint8_t crc=0x00;
     while (len--) {
         crc ^= *ptr++;
-        for (i=8; i>0; --i) { 
+        for (i=8; i>0; --i) {
             if (crc & 0x80)
                 crc = (crc << 1) ^ 0x31;
             else
                 crc = (crc << 1);
         }
     }
-    return (crc); 
+    return (crc);
 }
 
 static void sendCtrlCommand(rcsplit_ctrl_argument_e argument)
@@ -81,16 +83,16 @@ static void sendCtrlCommand(rcsplit_ctrl_argument_e argument)
     serialWriteBuf(rcSplitSerialPort, uart_buffer, 5);
 }
 
-static void rcSplitProcessMode() 
+static void rcSplitProcessMode()
 {
     // if the device not ready, do not handle any mode change event
-    if (RCSPLIT_STATE_IS_READY != cameraState) 
+    if (RCSPLIT_STATE_IS_READY != cameraState)
         return ;
 
     for (boxId_e i = BOXCAMERA1; i <= BOXCAMERA3; i++) {
         uint8_t switchIndex = i - BOXCAMERA1;
         if (IS_RC_MODE_ACTIVE(i)) {
-            // check last state of this mode, if it's true, then ignore it. 
+            // check last state of this mode, if it's true, then ignore it.
             // Here is a logic to make a toggle control for this mode
             if (switchStates[switchIndex].isActivated) {
                 continue;
@@ -138,7 +140,7 @@ bool rcSplitInit(void)
     // set init value to true, to avoid the action auto run when the flight board start and the switch is on.
     for (boxId_e i = BOXCAMERA1; i <= BOXCAMERA3; i++) {
         uint8_t switchIndex = i - BOXCAMERA1;
-        switchStates[switchIndex].isActivated = true; 
+        switchStates[switchIndex].isActivated = true;
     }
 
     cameraState = RCSPLIT_STATE_IS_READY;

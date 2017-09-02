@@ -42,7 +42,6 @@
 #define SPI2_MOSI_PIN           PB15
 
 #define USE_SDCARD
-#define USE_SDCARD_SPI2
 
 #define SDCARD_DETECT_PIN                    PC14
 #define SDCARD_SPI_INSTANCE                  SPI2
@@ -97,7 +96,7 @@
 #define SERIAL_PORT_COUNT 5
 
 #define USE_ESCSERIAL
-#define ESCSERIAL_TIMER_TX_HARDWARE 0 // PWM 1
+#define ESCSERIAL_TIMER_TX_PIN  PA8  // (HARDARE=0)
 
 #define USE_I2C
 #define USE_I2C_DEVICE_1
@@ -122,4 +121,3 @@
 
 #define USABLE_TIMER_CHANNEL_COUNT 18
 #define USED_TIMERS             (TIM_N(1) | TIM_N(2) | TIM_N(3) | TIM_N(4) | TIM_N(8) | TIM_N(15) | TIM_N(16) | TIM_N(17))
-

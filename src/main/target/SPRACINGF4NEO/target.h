@@ -100,7 +100,7 @@
 #define UART5_RX_PIN                        PD2
 
 #define USE_ESCSERIAL
-#define ESCSERIAL_TIMER_TX_HARDWARE         0 // PWM 1
+#define ESCSERIAL_TIMER_TX_PIN              PA3  // (Hardware=0)
 
 #define USE_I2C
 #define USE_I2C_DEVICE_1
@@ -157,11 +157,10 @@
 #define MAX7456_DMA_IRQ_HANDLER_ID          DMA1_ST0_HANDLER
 
 #define USE_SDCARD
-#define USE_SDCARD_SPI2
 
 #define SDCARD_DETECT_INVERTED
-
 #define SDCARD_DETECT_PIN                   PC14
+
 #define SDCARD_SPI_INSTANCE                 SPI2
 #define SDCARD_SPI_CS_PIN                   SPI2_NSS_PIN
 
@@ -177,6 +176,8 @@
 
 #define MPU6500_CS_PIN                      SPI1_NSS_PIN
 #define MPU6500_SPI_INSTANCE                SPI1
+
+#define VBAT_LPF_FREQ 0.25f                // The ADC in the F4NEO appears to be noisy, this stabilises it but at the cost of latency.
 
 #define USE_ADC
 #define ADC_INSTANCE                        ADC1
@@ -230,4 +231,3 @@
 
 #define USABLE_TIMER_CHANNEL_COUNT          14 // 4xPWM, 6xESC, 2xESC via UART3 RX/TX, 1xLED Strip, 1xIR.
 #define USED_TIMERS                         (TIM_N(1) | TIM_N(2) | TIM_N(3) | TIM_N(8) | TIM_N(9))
-

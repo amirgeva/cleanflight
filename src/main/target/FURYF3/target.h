@@ -84,7 +84,7 @@
     #define USE_MAX7456
     #define MAX7456_SPI_INSTANCE    SPI1
     #define MAX7456_SPI_CS_PIN      PC13
-    #define MAX7456_SPI_CLK         (SPI_CLOCK_STANDARD*2)
+    #define MAX7456_SPI_CLK         (SPI_CLOCK_STANDARD) // 10MHz
     #define MAX7456_RESTORE_CLK     (SPI_CLOCK_FAST)
 
     #define USE_FLASHFS
@@ -99,7 +99,6 @@
 #else
 
     #define USE_SDCARD
-    #define USE_SDCARD_SPI2
 
     #define SDCARD_DETECT_INVERTED
 
@@ -144,12 +143,12 @@
 #define SOFTSERIAL1_RX_PIN      PB0
 #define SOFTSERIAL1_TX_PIN      PB1
 
-    #define SONAR
-    #define SONAR_ECHO_PIN          PB1
-    #define SONAR_TRIGGER_PIN       PB0
+#define SONAR
+#define SONAR_ECHO_PIN          PB1
+#define SONAR_TRIGGER_PIN       PB0
 
 #define USE_ESCSERIAL
-#define ESCSERIAL_TIMER_TX_HARDWARE 0 // PWM 1
+#define ESCSERIAL_TIMER_TX_PIN  PB3  // (HARDARE=0,PPM)
 
 #define UART1_TX_PIN            PA9
 #define UART1_RX_PIN            PA10

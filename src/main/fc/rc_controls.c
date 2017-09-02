@@ -34,6 +34,10 @@
 #include "config/parameter_group.h"
 #include "config/parameter_group_ids.h"
 
+#include "cms/cms.h"
+
+#include "drivers/camera_control.h"
+
 #include "fc/config.h"
 #include "fc/fc_core.h"
 #include "fc/rc_controls.h"
@@ -121,6 +125,12 @@ void processRcStickPositions(throttleStatus_e throttleStatus)
     static uint8_t rcDisarmTicks;       // this is an extra guard for disarming through switch to prevent that one frame can disarm it
     uint8_t stTmp = 0;
     int i;
+
+#ifdef CMS
+    if (cmsInMenu) {
+        return;
+    }
+#endif
 
     // ------------------ STICKS COMMAND HANDLER --------------------
     // checking sticks positions
@@ -302,6 +312,21 @@ void processRcStickPositions(throttleStatus_e throttleStatus)
     }
 #endif
 
+#ifdef USE_CAMERA_CONTROL
+    if (rcSticks == THR_CE + YAW_HI + PIT_CE + ROL_CE) {
+        cameraControlKeyPress(CAMERA_CONTROL_KEY_ENTER, 0);
+    } else if (rcSticks == THR_CE + YAW_CE + PIT_CE + ROL_LO) {
+        cameraControlKeyPress(CAMERA_CONTROL_KEY_LEFT, 0);
+    } else if (rcSticks == THR_CE + YAW_CE + PIT_HI + ROL_CE) {
+        cameraControlKeyPress(CAMERA_CONTROL_KEY_UP, 0);
+    } else if (rcSticks == THR_CE + YAW_CE + PIT_CE + ROL_HI) {
+        cameraControlKeyPress(CAMERA_CONTROL_KEY_RIGHT, 0);
+    } else if (rcSticks == THR_CE + YAW_CE + PIT_LO + ROL_CE) {
+        cameraControlKeyPress(CAMERA_CONTROL_KEY_DOWN, 0);
+    } else if (rcSticks == THR_LO + YAW_CE + PIT_HI + ROL_CE) {
+        cameraControlKeyPress(CAMERA_CONTROL_KEY_UP, 2000);
+   }
+#endif
 }
 
 int32_t getRcStickDeflection(int32_t axis, uint16_t midrc) {

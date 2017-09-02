@@ -60,7 +60,7 @@
 #include "flight/altitude.h"
 #include "sensors/sensors.h"
 #include "sensors/battery.h"
-#include "sensors/barometer.h"
+//#include "sensors/barometer.h"
 #include "telemetry/telemetry.h"
 #include "telemetry/jetiexbus.h"
 #endif //TELEMETRY
@@ -602,12 +602,12 @@ bool jetiExBusInit(const rxConfig_t *rxConfig, rxRuntimeConfig_t *rxRuntimeConfi
         return false;
     }
 
-    jetiExBusPort = openSerialPort(portConfig->identifier, 
-        FUNCTION_RX_SERIAL, 
-        jetiExBusDataReceive, 
-        JETIEXBUS_BAUDRATE, 
-        MODE_RXTX, 
-        JETIEXBUS_OPTIONS | (rxConfig->halfDuplex ? SERIAL_BIDIR : 0) 
+    jetiExBusPort = openSerialPort(portConfig->identifier,
+        FUNCTION_RX_SERIAL,
+        jetiExBusDataReceive,
+        JETIEXBUS_BAUDRATE,
+        MODE_RXTX,
+        JETIEXBUS_OPTIONS | (rxConfig->halfDuplex ? SERIAL_BIDIR : 0)
         );
     serialSetMode(jetiExBusPort, MODE_RX);
     return jetiExBusPort != NULL;
